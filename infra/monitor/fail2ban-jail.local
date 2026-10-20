@@ -1,0 +1,51 @@
+# fail2ban for the shared VPS.
+#
+# §15 of the deployment prompt requires it. The care taken below is because this
+# host runs nine projects and a misconfigured jail locks out the administrator
+# of all of them at once.
+#
+# Worth knowing before tuning: SSH password authentication is already disabled
+# and root login is key-only, so the 192 failed attempts in the last seven days
+# could not have succeeded. This reduces log noise and load rather than closing
+# an open door — which is why the settings are deliberately mild.
+#
+# Install — the tr is not optional:
+#   tr -d '\015' < infra/monitor/fail2ban-jail.local > /etc/fail2ban/jail.local
+#   fail2ban-client -t && systemctl enable --now fail2ban
+#
+# 015 is octal for carriage return, written that way because every attempt to
+# put the usual escape for it in this comment was itself mangled in transit —
+# the same class of problem the command exists to solve.
+#
+# Why it matters: if this file reaches the server with CRLF endings, fail2ban
+# reads the section header with a trailing carriage return, matches no known
+# section, and silently applies none of the file — leaving the jail running
+# with an empty allowlist. It answers "configuration test is successful"
+# either way, so that test proves nothing here. These two do:
+#   fail2ban-client get sshd ignoreip     # must list the allowlist, not "No IP"
+#   fail2ban-client get sshd bantime      # must be 3600, not the 600 default
+
+[DEFAULT]
+# Never ban these, whatever they do.
+#   127.0.0.1/8, ::1   — the host itself
+#   172.16.0.0/12      — Docker bridge networks; a container tripping a jail
+#                        and banning the bridge would cut every service at once
+#   203.0.113.30       — the administrative workstation in use on 4 August
+#   31.4.242.0/24      — the range the owner has connected from historically
+ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12 10.0.0.0/8 203.0.113.30 31.4.242.0/24
+
+# An hour, not permanently. A permanent ban on a dynamic address eventually
+# blocks somebody who has done nothing, and nobody remembers to clear it.
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+
+backend  = systemd
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = ssh
+# Only SSH. Adding jails for the web services would put fail2ban in the path of
+# nine applications' traffic, which is a much larger change than this one and
+# should be a separate decision.

@@ -1,0 +1,11 @@
+code,name,default_owner,default_retention
+POL,Policy,Governance,PERM
+SOP,Standard Operating Procedure,Operations,ACTIVE+7Y
+CTR,Contract,Legal,EXPIRY+10Y
+MIN,Meeting Minutes,Secretariat,10Y
+DEC,Decision Record,Governance,PERM
+INV,Invoice,Finance,STATUTORY
+HRF,Employee Record,People,EMPLOYMENT+STATUTORY
+PRJ,Project Record,Delivery,CLOSE+7Y
+TEC,Technical Record,Technology,ACTIVE+5Y
+MKT,Marketing Asset,Marketing,ACTIVE+3Y

@@ -1,0 +1,8 @@
+status,meaning
+DRAFT,Editable working copy
+REVIEW,Awaiting validation
+APPROVED,Authorized controlled record
+EXECUTED,Legally or operationally completed
+SUPERSEDED,Replaced but retained
+ARCHIVED,Inactive retained record
+DELETION_PENDING,Approved candidate awaiting execution

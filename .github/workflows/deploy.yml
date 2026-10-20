@@ -1,0 +1,56 @@
+name: Build & Deploy
+
+# Auto-build and deploy app-web on every push to main.
+# Requires two repo secrets (Settings → Secrets and variables → Actions):
+#   VPS_SSH_KEY  — a private SSH key authorized for root@the VPS
+#   VPS_HOST     — the VPS host/IP (e.g. 203.0.113.10)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate --schema packages/db/prisma/schema.prisma
+      - name: Build web
+        run: npm run build --workspace apps/web
+        env:
+          # Build-time only; real values come from the server .env at runtime.
+          # Dummy DB URL lets the Prisma client instantiate; pages are force-dynamic
+          # so nothing queries at build time.
+          SKIP_ENV_VALIDATION: "1"
+          DATABASE_URL: "postgresql://build:build@localhost:5432/build"
+
+  deploy:
+    name: Deploy to VPS
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package source (exclude build artefacts, secrets, native app)
+        run: tar --exclude=node_modules --exclude=.next --exclude=.git --exclude=.env --exclude=mobile -czf /tmp/s.tgz .
+      - name: Ship & deploy over SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          install -m 600 /dev/stdin key <<< "$VPS_SSH_KEY"
+          SSH="ssh -i key -o StrictHostKeyChecking=no root@$VPS_HOST"
+          scp -i key -o StrictHostKeyChecking=no /tmp/s.tgz root@$VPS_HOST:/tmp/s.tgz
+          $SSH 'rm -rf /tmp/appx && mkdir -p /tmp/appx && tar -xzf /tmp/s.tgz -C /tmp/appx && cp -a /tmp/appx/. /var/www/app/ && cd /var/www/app && bash ./_deploy.sh'
+          $SSH 'for i in $(seq 1 90); do grep -q DEPLOY_DONE /tmp/deploy.log && break; sleep 5; done; tail -3 /tmp/deploy.log'

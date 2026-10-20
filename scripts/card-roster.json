@@ -1,0 +1,39 @@
+{
+  "_comment": "Print roster for scripts/export-cards.mjs. The central console (/central/cards) is the live editor; this file is the offline seed used for print runs. `variants` picks which approved country/language layouts to export for that person. Everyone below is a placeholder — replace them with your own people before any print run.",
+  "people": [
+    {
+      "name": "Founder Name",
+      "title": "Founder & CEO",
+      "email": "founder@example.com",
+      "phones": { "regionOne": "+1 555 555 0103", "regionTwo": "+1 555 555 0104", "regionThree": "+1 555 555 0102" },
+      "locations": {
+        "regionOne": "Example City, Example Country",
+        "regionTwo": "Example Town, Example Country",
+        "regionThree": "Example Village, Example Country"
+      },
+      "variants": [
+        { "country": "regionOne", "lang": "en" },
+        { "country": "regionTwo", "lang": "es" },
+        { "country": "regionThree", "lang": "en" }
+      ]
+    },
+    {
+      "name": "Operations Name",
+      "title": "Operations Manager & Co-founder",
+      "email": "operations@example.com",
+      "phones": { "regionTwo": "+1 555 555 0105" },
+      "locations": { "regionTwo": "Example Town, Example Country" },
+      "variants": [{ "country": "regionTwo", "lang": "es" }]
+    },
+    {
+      "name": "Director Name",
+      "_note": "Demonstrates the incomplete-record path: no title supplied, so the export refuses to guess one. Set it at /central/cards before printing.",
+      "title": "TODO — title not supplied",
+      "email": "director@example.com",
+      "phones": { "regionThree": "+1 555 555 0102" },
+      "locations": { "regionThree": "Example Village, Example Country" },
+      "variants": [{ "country": "regionThree", "lang": "en" }],
+      "incomplete": true
+    }
+  ]
+}

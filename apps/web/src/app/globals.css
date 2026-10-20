@@ -1,0 +1,439 @@
+@import "tailwindcss";
+
+/* ============================================================
+   جمعية المحافظة على القرآن الكريم — theme tokens
+
+   Every colour below is sampled from the association's own emblem (the teal
+   wreath, the gold hands, the cream paper ground), so the mark sits on the
+   page instead of being pasted onto it.
+
+     ink teal    #0C3433      deep teal   #175F5E
+     teal        #4DACAC      mint        #B9DECF
+     gold        #D7B75A      pale gold   #F8E9CB
+     paper       #F8F7F3      white       #FFFFFF
+
+   Note what changed from the template this was built on, and why. There, the
+   accent was a metallic gold that could not legally carry text on a light
+   ground, so --accent-text had to carry a separate deepened gold. Here the
+   accent is the emblem's deep teal at 7.41:1 on white and 6.91:1 on paper —
+   it clears AA as a word, so --accent and --accent-text are the same colour
+   and there is no split to keep in sync.
+
+   The gold keeps the old constraint: #D7B75A is 1.94:1 on white, so it is a
+   SURFACE only. Ink teal sits on it at 6.95:1, never white at 1.94:1.
+
+   --on-accent is the colour that reads on --accent in the current theme, and
+   buttons reference it rather than hardcoding a hex — that is what keeps a
+   label legible if the accent is ever changed again.
+   ============================================================ */
+
+:root {
+  /* Light sections */
+  --bg: #ffffff;
+  --panel: #f8f7f3;
+  --surface: #e9efe9;
+  --ink: #0c3433;
+  --muted: #55666a;
+  --accent: #175f5e;
+  --accent2: #d7b75a;
+  --silver: #a9b4b3;
+  --hairline: rgba(23, 95, 94, 0.22);
+  --overlay: rgba(12, 52, 51, 0.05);
+  /* Same teal as --accent: it clears AA on both light grounds (7.41 / 6.91),
+     so unlike the template's gold it needs no deepened text-only variant. */
+  --accent-text: #175f5e;
+  /* White on deep teal is 7.41:1. */
+  --on-accent: #ffffff;
+  --on-danger: #ffffff;
+  color-scheme: light;
+
+  /* Filled brand surfaces — the wreath teal deepening into the ink teal.
+     White clears AA across the whole sweep (7.41 at the light end, 13.51 at
+     the deep end), so a button label never changes colour halfway across. */
+  --grad-from: #175f5e;
+  --grad-to: #0c3433;
+
+  /* Gradient-coloured TEXT is a separate ramp: running a gradient that
+     reaches the bright teal through letterforms would put that end at
+     2.69:1 on white. This one stays in the legal range throughout. */
+  --grad-text-from: #0c3433;
+  --grad-text-to: #175f5e;
+}
+
+/* Explicit dark choice (toggle) */
+:root[data-theme="dark"] {
+  --bg: #071f1e;
+  --panel: #0c3433;
+  --surface: #144544;
+  --ink: #f8f7f3;
+  --muted: #9fb8b5;
+  /* On the dark ground the bright wreath teal carries: 5.03:1 on --panel. */
+  --accent: #4dacac;
+  --accent2: #d7b75a;
+  --silver: #a9b4b3;
+  --hairline: rgba(77, 172, 172, 0.3);
+  --overlay: rgba(255, 255, 255, 0.06);
+  /* Mint reads strongest on the dark panel at 9.27:1. */
+  --accent-text: #b9decf;
+  --on-accent: #0c3433;
+  --on-danger: #071f1e;
+  --grad-from: #4dacac;
+  --grad-to: #175f5e;
+  --grad-text-from: #b9decf;
+  --grad-text-to: #4dacac;
+  color-scheme: dark;
+}
+
+/* Follow the OS setting when the visitor hasn't explicitly chosen light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #071f1e;
+    --panel: #0c3433;
+    --surface: #144544;
+    --ink: #f8f7f3;
+    --muted: #9fb8b5;
+    --accent: #4dacac;
+    --accent2: #d7b75a;
+    --silver: #a9b4b3;
+    --hairline: rgba(77, 172, 172, 0.3);
+    --overlay: rgba(255, 255, 255, 0.06);
+    --accent-text: #b9decf;
+    --on-accent: #0c3433;
+    --on-danger: #071f1e;
+    --grad-from: #4dacac;
+    --grad-to: #175f5e;
+    --grad-text-from: #b9decf;
+    --grad-text-to: #4dacac;
+    color-scheme: dark;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
+  transition: background-color 0.2s ease;
+}
+
+/* body is transparent so the site-wide fixed GlobalBackground shows through;
+   html keeps the base colour so there is never a flash. */
+body {
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  transition: color 0.2s ease;
+}
+
+/* Display voice — the serif from the mark. Applied to headings rather than
+   opted into per component, so a new page inherits the identity by default
+   instead of quietly shipping in the body face. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: 0.01em;
+}
+
+/* Arabic and Urdu keep Cairo for headings too. Cormorant has no Arabic coverage
+   at all, so without this rule an Arabic h1 falls through to whatever the OS
+   happens to have — which is how Arabic ends up looking like an afterthought on
+   a company's site. */
+:root:lang(ar) body,
+:root:lang(ur) body,
+[lang="ar"],
+[lang="ur"] {
+  font-family: var(--font-body), "Noto Naskh Arabic", Tahoma, sans-serif;
+}
+:root:lang(ar) h1,
+:root:lang(ar) h2,
+:root:lang(ar) h3,
+:root:lang(ur) h1,
+:root:lang(ur) h2,
+:root:lang(ur) h3 {
+  font-family: var(--font-body), "Noto Naskh Arabic", Tahoma, sans-serif;
+  letter-spacing: 0;
+}
+
+/* Filled brand surfaces — unified bright gradient in both themes. */
+.app-gradient {
+  background: linear-gradient(90deg, var(--grad-from), var(--grad-to));
+}
+
+/* Gradient-coloured TEXT uses the text ramp, not the surface ramp: the light
+   gold that reads beautifully as a button fill is 2.4:1 as a letterform. */
+.app-gradient-text {
+  background: linear-gradient(90deg, var(--grad-text-from), var(--grad-text-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+}
+
+/* Accessible keyboard focus indicator (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Digital business card (native /cards/[slug] route) ---- */
+.app-card-scene {
+  width: 360px;
+  max-width: 100%;
+  perspective: 1400px;
+  margin-inline: auto;
+}
+/* Phones: the 3D flip needs a perspective proportional to the card, otherwise
+   the rotation looks distorted on a narrow viewport. */
+@media (max-width: 480px) {
+  .app-card-scene {
+    width: 100%;
+    perspective: 1000px;
+  }
+}
+/* Both faces occupy the SAME grid cell. The cell is sized by whichever face is
+   taller and both stretch to fill it, so the two sides can never disagree on
+   size — on screen or on paper — without any JS measuring. */
+.app-card-wrap {
+  display: grid;
+  position: relative;
+}
+/* Cross-browser flip. Each face rotates ITSELF with its own perspective() and
+   backface-visibility — we do NOT use transform-style:preserve-3d on the
+   wrapper, because `display:grid` is a grouping property that forces flattening
+   (Safari/iOS then bleeds the back face through). Opacity is a belt-and-braces
+   fallback for engines whose backface-visibility is unreliable. Both faces stay
+   in the same grid cell, so the wrapper still sizes to the taller one. */
+.app-card-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
+  pointer-events: none;
+}
+.app-card-front {
+  transform: perspective(1400px) rotateY(0deg);
+  opacity: 1;
+  z-index: 2;
+  pointer-events: auto;
+}
+.app-card-back {
+  transform: perspective(1400px) rotateY(-180deg);
+  opacity: 0;
+  z-index: 1;
+}
+.app-card-wrap.is-flipped .app-card-front {
+  transform: perspective(1400px) rotateY(180deg);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.app-card-wrap.is-flipped .app-card-back {
+  transform: perspective(1400px) rotateY(0deg);
+  opacity: 1;
+  z-index: 2;
+  pointer-events: auto;
+}
+.app-card-div {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--accent), var(--accent2), transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-card-face {
+    transition: none;
+  }
+}
+
+/* ---- Save as PDF (window.print) ----
+   Prints the card only: both faces laid out flat, actions removed, in whatever
+   theme is on screen — light OR dark. Vector text, so it stays selectable.
+
+   print-color-adjust is the crux: browsers drop background colours when printing
+   by default, so without it the dark card would silently come out white-on-white
+   (its text is light). This forces the real colours into the PDF. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: var(--bg) !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  /* hide the whole app, then reveal just the card */
+  body * {
+    visibility: hidden !important;
+  }
+  .app-card-scene,
+  .app-card-scene * {
+    visibility: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .app-card-scene {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    perspective: none !important;
+  }
+  /* Un-flip and put the faces in two rows instead of one stacked cell.
+     `1fr 1fr` on an auto-height grid sizes BOTH rows to the taller face, so the
+     printed front and back come out exactly the same size. */
+  .app-card-wrap {
+    transform: none !important;
+    height: auto !important;
+    transform-style: flat !important;
+    grid-template-rows: 1fr 1fr;
+    row-gap: 14px;
+  }
+  .app-card-face {
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    transform: none !important;
+    opacity: 1 !important; /* screen state may have a face at opacity 0 */
+    break-inside: avoid;
+    border: 1px solid var(--hairline) !important;
+  }
+  .app-card-front {
+    grid-area: 1 / 1;
+  }
+  .app-card-back {
+    grid-area: 2 / 1;
+  }
+  .app-card-actions {
+    display: none !important;
+  }
+}
+
+/* ---- Mobile hardening: dynamic viewport height + notch/home-indicator safe areas ----
+   The app sets viewportFit=cover, so content can extend under the notch and the
+   home indicator; nothing accounted for that. env() resolves to 0 on non-notch /
+   non-cover contexts (desktop, most Android), so these are inert there. Each rule
+   ships a PLAIN fallback line first, so browsers without dvh/env() (iOS < 15.4,
+   old WebViews) keep the original 100vh / fixed offsets instead of collapsing. */
+.app-minh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.app-fab {
+  bottom: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
+}
+.app-fab-r {
+  right: 1.25rem;
+  right: calc(1.25rem + env(safe-area-inset-right));
+}
+.app-fab-l {
+  left: 1.25rem;
+  left: calc(1.25rem + env(safe-area-inset-left));
+}
+.app-panel-hi {
+  bottom: 6rem;
+  bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+.app-panel-lo {
+  bottom: 5rem;
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+.app-safe-b {
+  padding-bottom: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+.app-safe-t {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ---- Theme-aware brand mark (blue on light, white on dark) ----
+   Same switching logic as the theme tokens above: light by default, dark via
+   the manual toggle, or via the OS setting when no explicit choice was made. */
+.brand-logo-light {
+  display: inline-block;
+}
+.brand-logo-dark {
+  display: none;
+}
+
+:root[data-theme="dark"] .brand-logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .brand-logo-dark {
+  display: inline-block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-logo-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .brand-logo-dark {
+    display: inline-block;
+  }
+}
+
+/* ── Touch devices ───────────────────────────────────────────────────────────
+   Audited with scripts/audit-mobile.mjs, which reported inline links and the
+   language <select> landing well under a comfortable finger target across the
+   footer and nav. Scoped to coarse pointers so the desktop rhythm is untouched. */
+@media (pointer: coarse) {
+  nav a,
+  footer a,
+  .app-touch a {
+    /* Enlarges the hit area without moving anything: padding is part of the hit
+       box even on an inline link, so the extra height costs no layout.
+
+       Do NOT set `display` here. Tailwind v4 emits utilities inside a cascade
+       layer, and an unlayered rule like this one outranks every layered
+       utility regardless of specificity — so forcing `inline-block` silently
+       killed `flex` on every nav link on every touch device, which collapsed
+       the console sidebar into two ragged columns. */
+    padding-block: 0.4rem;
+  }
+  select,
+  button,
+  [role="button"] {
+    min-height: 40px;
+  }
+}
+
+/* A single stray wide element used to make every page scroll sideways on a
+   360px screen. `clip` contains that without creating a scroll container, so
+   sticky headers keep working — `hidden` would break them. */
+html {
+  overflow-x: clip;
+}
+
+/* ---- Section reveal ----
+   Scroll-linked where the browser supports it, and a plain on-load fade
+   everywhere else. Deliberately CSS-only: an IntersectionObserver for a
+   decorative fade is JavaScript the page does not need, and the fallback
+   leaves the content visible rather than hidden behind a script that might
+   not run. */
+@keyframes app-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.app-reveal {
+  animation: app-fade-up 0.6s ease-out both;
+}
+@supports (animation-timeline: view()) {
+  .app-reveal {
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-reveal {
+    animation: none;
+  }
+}

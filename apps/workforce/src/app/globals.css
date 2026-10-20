@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+/* Same tokens as the public site and the advisor, so the portal is visibly the
+   same product. Light by default, dark via the OS preference. */
+:root {
+  --bg: #ffffff;
+  --panel: #f6f9ff;
+  --surface: #eef3ff;
+  --ink: #0b1f47;
+  --muted: #5a6b8c;
+  --accent: #1e6bff;
+  --accent2: #0b3aa8;
+  --hairline: rgba(11, 31, 71, 0.12);
+  --overlay: rgba(11, 31, 71, 0.05);
+  --grad-from: #b84dff;
+  --grad-to: #1fc8ff;
+  --ok: #047857;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  /* Foreground for text sitting ON --accent / --danger, not on the page.
+     It has to flip with the theme: white on the light accent is 4.56, on the
+     dark accent it is 1.95. Dark ink is the reverse — 4.28 and 10.01. A single
+     fixed value fails at one end whichever one you pick. */
+  /* Accent used as TEXT, which is a different problem from accent used as a
+     surface. The brand blue clears AA on pure white at 4.56 but drops to 4.33
+     on --panel and 4.11 on --surface, and most text sits on those. This is a
+     shade darker and clears 4.5 on all three. The brand colour itself is
+     untouched: buttons, borders, the logo and the gradient still use --accent.
+     In dark mode the bright cyan already passes comfortably, so it is the same
+     value there and nothing changes. */
+  --accent-text: #155ce8;
+  --on-accent: #ffffff;
+  --on-danger: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #070c18;
+  --panel: #0d1730;
+  --surface: #132244;
+  --ink: #eaf4ff;
+  --muted: #93b0d6;
+  --accent: #1fc8ff;
+  --accent2: #b84dff;
+  --hairline: rgba(34, 200, 255, 0.22);
+  --overlay: rgba(255, 255, 255, 0.06);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --accent-text: #1fc8ff;
+  --on-accent: #070c18;
+  --on-danger: #070c18;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #070c18;
+    --panel: #0d1730;
+    --surface: #132244;
+    --ink: #eaf4ff;
+    --muted: #93b0d6;
+    --accent: #1fc8ff;
+    --accent2: #b84dff;
+    --hairline: rgba(34, 200, 255, 0.22);
+    --overlay: rgba(255, 255, 255, 0.06);
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --danger: #fca5a5;
+    --accent-text: #1fc8ff;
+    --on-accent: #070c18;
+    --on-danger: #070c18;
+    color-scheme: dark;
+  }
+}
+
+/* html carries the base colour; body is transparent so the fixed background
+   shows through — the same arrangement the public site uses. */
+html {
+  background: var(--bg);
+}
+
+body {
+  background: transparent;
+  color: var(--ink);
+  /* dvh, not vh: mobile browsers count the address bar in vh and the layout
+     jumps as it hides. */
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* No page should scroll sideways on a 360px phone. */
+  overflow-x: hidden;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+}
+
+/* Every interactive control clears the 44px comfortable tap target. */
+button,
+a.btn,
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+/* iOS zooms the page when a focused text field is under 16px. */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Brand mark ──────────────────────────────────────────────────────────────
+   Both logos ship; CSS shows exactly one. Doing the swap in CSS rather than
+   JavaScript means it changes with the theme instantly and never flashes the
+   wrong colour while the page is still loading. */
+.brand-logo-light { display: inline-block; }
+.brand-logo-dark  { display: none; }
+
+:root[data-theme="dark"] .brand-logo-light { display: none; }
+:root[data-theme="dark"] .brand-logo-dark  { display: inline-block; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-logo-light { display: none; }
+  :root:not([data-theme="light"]) .brand-logo-dark  { display: inline-block; }
+}

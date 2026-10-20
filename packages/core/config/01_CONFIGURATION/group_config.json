@@ -1,0 +1,9 @@
+{
+  "group_id": "ORG-GROUP",
+  "group_name": "Unskinned",
+  "default_language": "en",
+  "timezone": "Europe/Madrid",
+  "ai_confidence_auto_file": 0.92,
+  "ai_confidence_human_review": 0.7,
+  "destructive_actions_require_human_approval": true
+}

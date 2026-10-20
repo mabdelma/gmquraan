@@ -1,0 +1,37 @@
+{
+  "name": "unskinned-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Brand-neutral monorepo template: multi-tenant Next.js platform, Fastify microservices, Prisma/Postgres, realtime AI advisor",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:agent": "npm --prefix apps/agent run dev",
+    "build:web": "npm --prefix apps/web run build",
+    "build:agent": "npm --prefix apps/agent run build",
+    "lint:web": "npm --prefix apps/web run lint",
+    "test:web": "npm --prefix apps/web run test",
+    "install:all": "npm --prefix apps/web install && npm --prefix apps/agent install",
+    "services:dev": "docker compose -f infra/compose/docker-compose.platform.yml up --build",
+    "services:build": "npm run build --workspaces --if-present",
+    "dev:infra": "docker compose up -d"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "playwright": "^1.62.0",
+    "prettier": "^3.8.4"
+  }
+}

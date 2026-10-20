@@ -1,0 +1,206 @@
+# Example Company production stack — a second, fully separate instance of this codebase
+# on the Qarrito VPS, living at /var/www/app and joined to the shared
+# external `edge` network so the central Caddy can reverse_proxy to it.
+#
+#   cd /var/www/app
+#   docker compose -f infra/compose/docker-compose.example.yml --env-file .env up -d --build
+#
+# Everything is prefixed `example-` and nothing is shared with the `app` stack: its
+# own Postgres, its own volumes, its own internal network. The two stacks can be
+# stopped, rebuilt or destroyed independently. No host ports are published —
+# traffic arrives only through Caddy on `edge`, same as app.
+#
+# APP_URL, PORTAL_URL, AUTH_SECRET and POSTGRES_PASSWORD are declared with `:?`
+# so compose refuses to start rather than silently bringing the stack up on the
+# wrong domain or a blank secret. Copy .env.tenant.example → .env and fill them in.
+
+name: example
+
+x-svc-env: &svc-env
+  AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+  DATABASE_URL: postgresql://tenant:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@example-postgres:5432/tenant
+  # The control plane: who the tenants are. A separate database from the one
+  # holding tenant data, so a query that can read a tenant's documents cannot
+  # also read the list of every customer.
+  CONTROL_DATABASE_URL: postgresql://tenant:${POSTGRES_PASSWORD}@example-postgres:5432/tenant_control
+  NODE_ENV: production
+  APP_URL: ${APP_URL:?set APP_URL in .env, e.g. https://example.com}
+  AUTH_URL_INTERNAL: http://example-auth:8080
+  CATALOG_URL_INTERNAL: http://example-catalog:8080
+  BILLING_URL_INTERNAL: http://example-billing:8080
+  ENGAGEMENT_URL_INTERNAL: http://example-engagement:8080
+  NOTIFICATIONS_URL_INTERNAL: http://example-notifications:8080
+
+services:
+  example-postgres:
+    image: postgres:16-alpine
+    container_name: example-postgres
+    environment:
+      POSTGRES_USER: tenant
+      POSTGRES_DB: tenant
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - app_pgdata:/var/lib/postgresql/data
+    networks: [app_internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenant -d tenant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  example-auth:
+    container_name: example-auth
+    build: { context: ../.., dockerfile: services/auth/Dockerfile }
+    environment: { <<: *svc-env, NOTIFICATIONS_URL_INTERNAL: http://example-notifications:8080 }
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-catalog:
+    container_name: example-catalog
+    build: { context: ../.., dockerfile: services/catalog/Dockerfile }
+    environment: *svc-env
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-billing:
+    container_name: example-billing
+    build: { context: ../.., dockerfile: services/billing/Dockerfile }
+    environment:
+      <<: *svc-env
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_GROWTH_PRICE_ID: ${STRIPE_GROWTH_PRICE_ID:-}
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-engagement:
+    container_name: example-engagement
+    build: { context: ../.., dockerfile: services/engagement/Dockerfile }
+    environment: *svc-env
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-notifications:
+    container_name: example-notifications
+    build: { context: ../.., dockerfile: services/notifications/Dockerfile }
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET}
+      NODE_ENV: production
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    networks: [app_internal]
+    restart: unless-stopped
+
+  example-web:
+    container_name: example-web
+    build: { context: ../.., dockerfile: apps/web/Dockerfile }
+    environment:
+      <<: *svc-env
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
+      UPLOAD_DIR: /data/uploads
+      # The console mints the portal handoff and needs to know where to send it.
+      PORTAL_URL: ${PORTAL_URL:?set PORTAL_URL in .env, e.g. https://workforce.example.com}
+      MAILCOW_API_URL: ${MAILCOW_API_URL:-}
+      MAILCOW_API_KEY: ${MAILCOW_API_KEY:-}
+      MAIL_DOMAINS: ${MAIL_DOMAINS:-}
+      MONITOR_SECRET: ${MONITOR_SECRET:-}
+      MONITOR_ALERT_TO: ${MONITOR_ALERT_TO:-}
+      INBOUND_SECRET: ${INBOUND_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      # Push notifications. Web Push (VAPID) is self-hosted — no Firebase.
+      # Generate a keypair for THIS domain; VAPID keys are origin-scoped and the
+      # app pair will not work here.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_CLIENT_EMAIL: ${FCM_CLIENT_EMAIL:-}
+      FCM_PRIVATE_KEY: ${FCM_PRIVATE_KEY:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_PRIVATE_KEY: ${APNS_PRIVATE_KEY:-}
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-}
+      APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
+    # This project's host port on the VPS. Nothing else on the box listens on
+    # 3600; only this service is published, everything else stays behind Caddy.
+    #
+    # Docker's iptables rules bypass ufw, so this IS reachable from the internet
+    # on plain HTTP with no certificate. It is a direct-access/debug door, not
+    # the way the public reaches the site. To make it loopback-only (then tunnel
+    # in with `ssh -L 3600:localhost:3600 vps`), change it to
+    # "127.0.0.1:3600:3000".
+    ports:
+      - "3601:3000"
+    volumes:
+      - app_uploads:/data/uploads
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-agent:
+    container_name: example-agent
+    build: { context: ../.., dockerfile: apps/agent/Dockerfile }
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: postgresql://tenant:${POSTGRES_PASSWORD}@example-postgres:5432/tenant
+      NODE_ENV: production
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # The advisor's tools read the catalogue through a same-origin proxy in
+      # the agent app, which calls this over the internal network.
+      CATALOG_URL_INTERNAL: http://example-catalog:8080
+      PORTAL_URL: ${PORTAL_URL}
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  # ── GM-OS ─────────────────────────────────────────────────────────────────
+  example-workforce:
+    container_name: example-workforce
+    build: { context: ../.., dockerfile: apps/workforce/Dockerfile }
+    environment:
+      <<: *svc-env
+      PORTAL_URL: ${PORTAL_URL}
+      # Members sign in with their real mailbox password, verified against
+      # Dovecot over TLS. Nothing is stored; see packages/gmos/src/imap-auth.ts.
+      # Leave blank until Example Company has its own mail server — password sign-in
+      # is unavailable without it and the portal will say so.
+      IMAP_HOST: ${IMAP_HOST:-}
+      # Controlled documents are stored content-addressed under this root.
+      DOCUMENT_ROOT: /data/documents
+    volumes:
+      - app_documents:/data/documents
+    networks: [edge, app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  example-orchestrator:
+    container_name: example-orchestrator
+    build: { context: ../.., dockerfile: services/orchestrator/Dockerfile }
+    environment:
+      <<: *svc-env
+      ORCHESTRATOR_INTERVAL_MS: ${ORCHESTRATOR_INTERVAL_MS:-60000}
+    # Internal only — no edge network, so nothing outside can reach it.
+    networks: [app_internal]
+    depends_on: { example-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+  app_internal:
+    driver: bridge
+
+volumes:
+  app_pgdata:
+  app_uploads:
+  app_documents:

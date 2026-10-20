@@ -1,0 +1,32 @@
+# Edge gateway for Unskinned.
+# Terminates TLS and routes host/path → service. Drop-in for the VPS/edge network
+# before (or instead of) the k8s Ingress. Mirrors ARCHITECTURE.md routing.
+
+# Marketing + client SaaS + partner portal + central admin (Next.js web app).
+example.com, www.example.com, app.example.com, central.example.com {
+	reverse_proxy web:3000
+}
+
+# AI Solutions Advisor (realtime).
+ai.example.com {
+	reverse_proxy agent:3001
+}
+
+# Public API — path-routed to the internal services.
+api.example.com {
+	# Optional JWT presence pre-check could go here (forward_auth to auth /v1/auth/verify).
+	handle_path /v1/auth/* {
+		reverse_proxy auth:8080
+	}
+	handle_path /v1/catalog/* {
+		reverse_proxy catalog:8080
+	}
+	handle_path /v1/billing/* {
+		reverse_proxy billing:8080
+	}
+	handle_path /v1/engagement/* {
+		reverse_proxy engagement:8080
+	}
+	# notifications is internal-only (not exposed at the edge).
+	respond 404
+}

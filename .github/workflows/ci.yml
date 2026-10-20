@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - name: Generate Prisma client
+        run: npm --workspace @app/db run generate
+      - name: Type-check services
+        run: |
+          for s in auth catalog billing engagement notifications; do
+            npx tsc -p services/$s/tsconfig.json --noEmit
+          done
+      - name: Type-check + build web
+        env:
+          AUTH_SECRET: ci-secret
+          DATABASE_URL: postgresql://app:app@localhost:5432/app
+        run: npm --workspace @app/web run build
+      - name: Test
+        run: npm --workspace @app/web run test --if-present
+
+  # Deploy runs only if SSH secrets are configured on the repo
+  # (VPS_HOST, VPS_USER, VPS_SSH_KEY). Add them in Settings → Secrets to enable.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy over SSH
+        if: ${{ secrets.VPS_HOST != '' }}
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh && echo "$VPS_SSH_KEY" > ~/.ssh/id && chmod 600 ~/.ssh/id
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id "$VPS_USER@$VPS_HOST" \
+            'cd /var/www/app && git pull --ff-only 2>/dev/null || true; \
+             docker compose -f infra/compose/docker-compose.prod.yml -p app --env-file .env up -d --build'

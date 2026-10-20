@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="refresh" content="0; url=https://example.com" />
+    <title>Unskinned</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #080f1e;
+        color: #e6ecff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+        padding: 24px;
+      }
+      a { color: #7aa2ff; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <p>Loading Unskinned…</p>
+      <p><a href="https://example.com">Continue to example.com</a></p>
+    </div>
+    <script>
+      // Fallback redirect in case the meta-refresh is blocked.
+      window.location.replace('https://example.com');
+    </script>
+  </body>
+</html>

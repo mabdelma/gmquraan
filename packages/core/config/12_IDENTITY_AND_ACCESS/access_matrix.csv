@@ -1,0 +1,17 @@
+area,data_owner,board,group_ceo,entity_manager,functional_director,department_manager,employee,contractor,external_guest,document_controller,ai_agent,infrastructure_admin
+00_SYSTEM,Group CEO,R,R,-,-,-,-,-,-,R,Scoped,AdminMetadataOnly
+01_GROUP_GOVERNANCE,Board,R,RA,-,-,-,-,-,-,RC,IndexOnly,PlatformOnly
+02_LEGAL_ENTITIES,Group CEO,R,RA,RA(Entity),R(Assigned),R(Assigned),Assigned,-,-,RC,MetadataOnly,PlatformOnly
+03_STRATEGY_AND_PORTFOLIO,Group CEO,R,RA,R(Assigned),RA(Assigned),R(Assigned),Assigned,-,-,RC,Scoped,PlatformOnly
+04_PEOPLE_AND_ORGANIZATION,HR Director,Reserved,RA,R(Entity),R(Function),R(Team),OwnAndPublished,Assigned,-,RC,MetadataOnly,PlatformOnly
+05_LEGAL_RISK_COMPLIANCE,Legal Director,Reserved,RA,R(Entity),R(Assigned),Assigned,Assigned,-,-,RC,MetadataOnly,PlatformOnly
+06_COMMERCIAL,Commercial Director,Summary,RA,RA(Entity),RA(Function),RA(Team),Assigned,Assigned,Explicit,RC,Scoped,PlatformOnly
+07_DELIVERY_AND_PROJECTS,Operations Director,Summary,RA,RA(Entity),RA(Function),RA(Team),Assigned,Assigned,Explicit,RC,Scoped,PlatformOnly
+08_FINANCE_AND_PROCUREMENT,CFO,Reserved,RA,R(Entity),R(Assigned),R(Assigned),Assigned,Assigned,-,RC,MetadataOnly,PlatformOnly
+09_PRODUCTS_AND_TECHNOLOGY,CTO,Summary,RA,R(Entity),RA(Function),RA(Team),Assigned,Assigned,-,RC,Scoped,PlatformOnly
+10_MARKETING_AND_BRAND,Marketing Director,Summary,RA,RA(Entity),RA(Function),RA(Team),Assigned,Assigned,Explicit,RC,Scoped,PlatformOnly
+11_OPERATIONS_AND_ADMIN,COO,Summary,RA,RA(Entity),RA(Function),RA(Team),Assigned,Assigned,-,RC,Scoped,PlatformOnly
+12_INBOX_AND_QUARANTINE,Document Controller,-,R,R(Assigned),R(Assigned),R(Assigned),SubmitOnly,SubmitOnly,-,RA,ScopedRW,PlatformOnly
+13_TEMPLATES,Document Controller,R,RA,R,R,R,R,R,-,RA,ReadAndDraft,PlatformOnly
+14_RECORDS_AND_ARCHIVE,Records Manager,Reserved,RA,R(Entity),R(Assigned),R(Assigned),ByAuthorization,-,-,RA,MetadataOnly,PlatformOnly
+Legend,Owner,-,-,-,-,-,-,-,-,-,-,-

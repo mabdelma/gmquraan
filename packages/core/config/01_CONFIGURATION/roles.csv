@@ -1,0 +1,16 @@
+role_id,role_name,reports_to,approval_level
+CEO,Group CEO,,A4
+COO,Chief Operating Officer,CEO,A3
+DOC,Document Controller,COO,A2
+CFO,Chief Financial Officer,CEO,A3
+CTO,Chief Technology Officer,CEO,A3
+MGR,Department Manager,Executive Owner,A2
+EMP,Employee,Manager,A0
+AI-OPS,AI Orchestrator,COO,A0
+BOARD,Board and Shareholders,,A4
+GM,Entity General Manager,COO,A3
+DIR,Functional Director,Executive Owner,A3
+PPM,Project or Product Manager,MGR,A1
+CON,Contractor or Partner,MGR,A0
+EXT,External Client or Vendor,,A0
+INFRA,Infrastructure Administrator,CTO,A0

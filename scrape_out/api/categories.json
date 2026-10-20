@@ -1,0 +1,968 @@
+[
+  {
+    "id": 2,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/ai/",
+    "name": "AI",
+    "slug": "ai",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/2",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=2"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 16,
+    "count": 3,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/app-develoment/",
+    "name": "App develoment",
+    "slug": "app-develoment",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/16",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=16"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1,
+    "count": 0,
+    "description": "Your blog category",
+    "link": "https://gmquran.com/category/blog/",
+    "name": "Blog",
+    "slug": "blog",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/1",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=1"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/",
+    "name": "Case Studies",
+    "slug": "case-studies",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=3"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/cloud-hosting/",
+    "name": "Cloud Hosting",
+    "slug": "cloud-hosting",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/4",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=4"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/company/",
+    "name": "Company",
+    "slug": "company",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/5",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=5"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/cyber-security/",
+    "name": "Cyber Security",
+    "slug": "cyber-security",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/6",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=6"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 17,
+    "count": 3,
+    "description": "",
+    "link": "https://gmquran.com/category/news/cybersecurity/",
+    "name": "Cybersecurity",
+    "slug": "cybersecurity",
+    "taxonomy": "category",
+    "parent": 11,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/17",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=17"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 18,
+    "count": 3,
+    "description": "",
+    "link": "https://gmquran.com/category/news/development/",
+    "name": "Development",
+    "slug": "development",
+    "taxonomy": "category",
+    "parent": 11,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/18",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=18"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/digital-transformation/",
+    "name": "Digital transformation",
+    "slug": "digital-transformation",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/7",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=7"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/events/",
+    "name": "Events",
+    "slug": "events",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/8",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=8"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 19,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/news/financials/",
+    "name": "Financials",
+    "slug": "financials",
+    "taxonomy": "category",
+    "parent": 11,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/19",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=19"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 20,
+    "count": 2,
+    "description": "",
+    "link": "https://gmquran.com/category/news/it/",
+    "name": "IT",
+    "slug": "it",
+    "taxonomy": "category",
+    "parent": 11,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/20",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=20"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "count": 2,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/it-consulting/",
+    "name": "IT Consulting",
+    "slug": "it-consulting",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/9",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=9"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 10,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/case-studies/mobile-development/",
+    "name": "Mobile development",
+    "slug": "mobile-development",
+    "taxonomy": "category",
+    "parent": 3,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/10",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/3"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=10"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "count": 4,
+    "description": "",
+    "link": "https://gmquran.com/category/news/",
+    "name": "News",
+    "slug": "news",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=11"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/product-engineering/",
+    "name": "Product engineering",
+    "slug": "product-engineering",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/12",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=12"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 13,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/sample-image/",
+    "name": "sample-image",
+    "slug": "sample-image",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/13",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=13"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 14,
+    "count": 1,
+    "description": "",
+    "link": "https://gmquran.com/category/news/startups/",
+    "name": "Startups",
+    "slug": "startups",
+    "taxonomy": "category",
+    "parent": 11,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/14",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "up": [
+        {
+          "embeddable": true,
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/11"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=14"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 15,
+    "count": 0,
+    "description": "",
+    "link": "https://gmquran.com/category/uncategorized/",
+    "name": "Uncategorized",
+    "slug": "uncategorized",
+    "taxonomy": "category",
+    "parent": 0,
+    "meta": [],
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories/15",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/categories"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/taxonomies/category"
+        }
+      ],
+      "wp:post_type": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/posts?categories=15"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

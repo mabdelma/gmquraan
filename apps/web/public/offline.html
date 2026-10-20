@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline · Unskinned</title>
+    <style>
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: #080f1e; color: #e8eefc;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px;
+      }
+      .card { max-width: 360px; }
+      img { width: 56px; height: 56px; margin-bottom: 18px; }
+      h1 { font-size: 22px; margin: 0 0 8px; }
+      p { color: #9fb0cc; font-size: 14px; line-height: 1.6; }
+      button {
+        margin-top: 18px; background: linear-gradient(90deg, #012d7b, #019df9); color: #080f1e;
+        font-weight: 700; border: 0; border-radius: 12px; padding: 11px 22px; font-size: 15px; cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/logo.svg" alt="" />
+      <h1>You're offline</h1>
+      <p>You don't seem to be connected. Unskinned needs a connection to load. Please reconnect and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+states: [new, triaged, planned, assigned, in_progress, blocked, review, approved, completed, archived]
+transitions:
+  new: [triaged, cancelled]
+  triaged: [planned, assigned, cancelled]
+  planned: [assigned]
+  assigned: [in_progress, blocked]
+  in_progress: [review, blocked]
+  review: [in_progress, approved]
+  approved: [completed]
+  completed: [archived]
+required_controls: [owner, due_date, priority, inputs, expected_outputs, acceptance_criteria, destination]

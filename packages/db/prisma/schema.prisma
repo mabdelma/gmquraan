@@ -1,0 +1,2783 @@
+// Unskinned — canonical data model (digital-solutions marketplace).
+// Domain-remapped from the upstream real-estate schema:
+//   Property→Solution, ViewingRequest→DemoRequest, Agency→Partner,
+//   Contract→Agreement, Tour/Scene→ProductDemo/DemoScene, Review targets→SOLUTION/PARTNER/SERVICE.
+// Starts as one shared Postgres; split into a schema-per-service later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Catalog enums ─────────────────────────────────────────────────────────────
+
+enum SolutionCategory {
+  SAAS_PLATFORM
+  LAUNCH_KIT
+  AI_AUTOMATION
+  PRODUCTIZED_SERVICE
+  MARKETPLACE_SOLUTION
+  MARKET_ENABLEMENT
+}
+
+enum LicenseModel {
+  SUBSCRIPTION
+  ONE_TIME
+  REVENUE_SHARE
+}
+
+enum Region {
+  GCC
+  EUROPE
+  GLOBAL
+}
+
+enum Role {
+  CLIENT
+  PARTNER
+  VENDOR
+  RESELLER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum DemoStatus {
+  REQUESTED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum Plan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String
+  name                 String?
+  role                 Role      @default(CLIENT)
+  locale               String?
+  emailVerified        DateTime?
+  consentAt            DateTime? // GDPR: when the user accepted Privacy Policy + Terms
+  plan                 Plan      @default(STARTER)
+  planExpiresAt        DateTime?
+  onboarded            Boolean   @default(true) // false for fresh OAuth sign-ups until they pick a role
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  stripeConnectId      String?   @unique // Stripe Connect account for automated partner/reseller payouts
+  emailAlerts          Boolean   @default(true) // saved-search / marketing email opt-in (GDPR/CAN-SPAM)
+  totpSecret           String? // base32 TOTP secret (2FA); null = not enrolled
+  totpEnabled          Boolean   @default(false) // 2FA active (secret confirmed)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  savedSolutions          SavedSolution[]
+  savedSearches           SavedSearch[]
+  demoRequests            DemoRequest[]
+  leads                   Lead[]               @relation("EnquirerLeads")
+  managedLeads            Lead[]               @relation("ManagedLeads")
+  ownedSolutions          Solution[]           @relation("OwnedSolutions")
+  productDemos            ProductDemo[]
+  transactions            PaymentTransaction[]
+  assignedCoupons         Coupon[]             @relation("AssignedCoupons")
+  resellerCoupons         Coupon[]             @relation("ResellerCoupons")
+  payouts                 Payout[]             @relation("ResellerPayouts")
+  partnerPolicyAcceptedAt DateTime? // when the user accepted the Partner Policy & Agreement
+  apiKeys                 PartnerApiKey[]      @relation("PartnerApiKeys")
+  partnerSales            PartnerSale[]        @relation("PartnerSales")
+  resellerExtSales        ResellerSale[]       @relation("ResellerExtSales")
+  agentUsage              AgentUsage[]
+  ownedPartners           Partner[]            @relation("OwnedPartner")
+  partnerMemberships      PartnerMember[]
+  notifications           Notification[]
+  quotesAsClient          Quote[]              @relation("QuoteClient")
+
+  // Agreements, messaging & reviews
+  agreementsAsPartyOne    Agreement[]               @relation("AgreementPartyOne")
+  agreementsAsPartyTwo    Agreement[]               @relation("AgreementPartyTwo")
+  createdAgreements       Agreement[]               @relation("AgreementCreator")
+  conversationMemberships ConversationParticipant[]
+  sentMessages            Message[]
+  reviews                 Review[]
+}
+
+// ── Billing ───────────────────────────────────────────────────────────────────
+
+enum PaymentMethod {
+  STRIPE
+  BIZUM
+  COUPON
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model PaymentTransaction {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          Plan
+  amount        Int // cents
+  currency      String        @default("EUR")
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  providerRef   String? // Stripe subscription ID or Bizum operation ID
+  providerData  Json? // raw response from PSP
+  couponId      String?
+  coupon        Coupon?       @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  discountCents Int?
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum DiscountType {
+  PERCENT // `amount` is 1–100 (% off)
+  FIXED // `amount` is cents off
+}
+
+/**
+ * Promo / subscription coupons created and assigned from the central dashboard.
+ */
+model Coupon {
+  id               String       @id @default(cuid())
+  code             String       @unique
+  description      String?
+  discountType     DiscountType @default(PERCENT)
+  amount           Int
+  appliesToPlan    Plan? // null = any paid plan
+  maxRedemptions   Int? // null = unlimited
+  redemptions      Int          @default(0)
+  assignedToUserId String?
+  assignedTo       User?        @relation("AssignedCoupons", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  // Reseller who owns this referral code and earns commission on its redemptions.
+  ownerId          String?
+  owner            User?        @relation("ResellerCoupons", fields: [ownerId], references: [id], onDelete: SetNull)
+  isReferral       Boolean      @default(false)
+  expiresAt        DateTime?
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  transactions PaymentTransaction[]
+
+  @@index([assignedToUserId])
+  @@index([ownerId])
+  @@index([active])
+}
+
+/**
+ * Revenue-share payout recorded for a reseller (partnership hub model).
+ */
+model Payout {
+  id         String    @id @default(cuid())
+  resellerId String
+  reseller   User      @relation("ResellerPayouts", fields: [resellerId], references: [id], onDelete: Cascade)
+  amount     Int // cents
+  currency   String    @default("EUR")
+  status     String    @default("PAID") // PENDING | PAID
+  note       String?
+  createdAt  DateTime  @default(now())
+  paidAt     DateTime?
+
+  @@index([resellerId])
+}
+
+/**
+ * API key a partner uses to integrate their external SaaS with the Unskinned platform.
+ */
+model PartnerApiKey {
+  id         String    @id @default(cuid())
+  keyHash    String    @unique // sha256 of the key; the plaintext is shown once
+  prefix     String // first chars, for display (e.g. app_live_ab12…)
+  name       String?
+  ownerId    String
+  owner      User      @relation("PartnerApiKeys", fields: [ownerId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([ownerId])
+}
+
+/**
+ * A sale reported by a partner's integrated SaaS (revenue-shared 50/50 per the Partner Policy).
+ */
+model PartnerSale {
+  id           String   @id @default(cuid())
+  ownerId      String
+  owner        User     @relation("PartnerSales", fields: [ownerId], references: [id], onDelete: Cascade)
+  solutionId   String?
+  amount       Int // gross, cents
+  currency     String   @default("EUR")
+  partnerShare Int // cents to the partner
+  platformShare Int // cents to the platform
+  customerRef  String? // partner's customer identifier (opaque)
+  externalId   String?  @unique // partner-supplied idempotency key
+  status       String   @default("COMPLETED") // COMPLETED | REFUNDED
+  createdAt    DateTime @default(now())
+
+  @@index([ownerId])
+}
+
+/**
+ * Append-only log of central-admin actions (who did what, when).
+ */
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actorEmail String
+  action     String // e.g. user.create, user.update, user.delete, payout.record
+  target     String? // affected entity (email / id)
+  detail     String? // human-readable summary
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/**
+ * Privacy-friendly first-party page-view analytics (no PII, no tracking cookies).
+ */
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  locale    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+}
+
+/**
+ * AI Solutions Advisor (gpt-realtime) token usage, reported per response.
+ */
+model AgentUsage {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  model        String   @default("gpt-realtime")
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalTokens  Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+/**
+ * One-time tokens for email verification and password reset.
+ */
+model AuthToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  type      String // "verify" | "reset"
+  userId    String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ── Engagement (leads, saved, demo requests) ────────────────────────────────────
+
+model Lead {
+  id              String     @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  company         String?
+  message         String?
+  status          LeadStatus @default(NEW)
+  source          String? // "solution_page" | "agent" | "contact_form" | "manual"
+  notes           String? // partner's private CRM notes
+  lastContactedAt DateTime?
+  solutionId      String?
+  solution        Solution?  @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  userId          String?
+  user            User?      @relation("EnquirerLeads", fields: [userId], references: [id], onDelete: SetNull)
+  ownerId         String? // the partner/agent managing this lead
+  owner           User?      @relation("ManagedLeads", fields: [ownerId], references: [id], onDelete: SetNull)
+  partnerId       String?
+  partner         Partner?   @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([status])
+  @@index([solutionId])
+  @@index([ownerId])
+  @@index([createdAt])
+}
+
+model SavedSolution {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solutionId String
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, solutionId])
+  @@index([userId])
+}
+
+model SavedSearch {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  query          String // JSON-encoded SolutionFilters
+  alerts         Boolean   @default(false)
+  lastNotifiedAt DateTime? // newest solution createdAt we've already alerted on
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model DemoRequest {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solutionId  String
+  solution    Solution   @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  preferredAt DateTime?
+  note        String?
+  status      DemoStatus @default(REQUESTED)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([solutionId])
+  @@index([status])
+}
+
+// ── Catalog (the marketplace) ───────────────────────────────────────────────────
+
+model Solution {
+  id                  String           @id @default(cuid())
+  slug                String           @unique
+  title               String
+  summary             String // short marketplace blurb
+  description         String // full detail
+  price               Int              @default(0) // cents; 0 = "contact for pricing"
+  currency            String           @default("EUR")
+  category            SolutionCategory
+  licenseModel        LicenseModel     @default(SUBSCRIPTION)
+  region              Region           @default(GLOBAL)
+  vendorName          String? // display name of the creator/partner
+  whiteLabel          Boolean          @default(false)
+  partnerSharePercent Int              @default(50) // revenue-share: % to the partner (Partner Policy = 50/50)
+  code                String?          @unique // human-friendly application ID, e.g. APP-1A2B3C4D
+  tags                String[]
+  images              String[]
+  demoMedia           String[] // walkthrough / product-tour media URLs
+  techStack           String[]
+  featured            Boolean          @default(false)
+  // Provenance for imported solutions (dedupe on re-sync)
+  source              String?
+  externalId          String?
+  url                 String?
+  ownerId             String? // the partner/vendor who published it
+  owner               User?            @relation("OwnedSolutions", fields: [ownerId], references: [id], onDelete: SetNull)
+  published           Boolean          @default(true)
+  featuredUntil       DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  partnerId String?
+  partner   Partner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+
+  leads         Lead[]
+  savedBy       SavedSolution[]
+  demoRequests  DemoRequest[]
+  agreements    Agreement[]
+  conversations Conversation[]
+  quotes        Quote[]
+
+  @@unique([source, externalId])
+  @@index([category])
+  @@index([licenseModel])
+  @@index([featured])
+  @@index([region])
+  @@index([ownerId])
+  @@index([published])
+}
+
+/**
+ * Interactive product demo / walkthrough (was the 360° Tour).
+ */
+model ProductDemo {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scenes DemoScene[]
+
+  @@index([userId])
+}
+
+model DemoScene {
+  id       String      @id @default(cuid())
+  demoId   String
+  demo     ProductDemo @relation(fields: [demoId], references: [id], onDelete: Cascade)
+  title    String
+  image    String
+  hotspots Json        @default("[]")
+
+  @@index([demoId])
+}
+
+// ── Partner ecosystem (was Agency) ──────────────────────────────────────────────
+
+enum PartnerRole {
+  ADMIN
+  MEMBER
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  website   String?
+  region    Region   @default(GLOBAL)
+  verified  Boolean  @default(false)
+  ownerId   String
+  owner     User     @relation("OwnedPartner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members       PartnerMember[]
+  solutions     Solution[]
+  leads         Lead[]
+  agreements    Agreement[]
+  conversations Conversation[]
+
+  @@index([ownerId])
+}
+
+model PartnerMember {
+  id        String      @id @default(cuid())
+  partnerId String
+  partner   Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      PartnerRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+
+  @@unique([partnerId, userId])
+  @@index([userId])
+}
+
+// ── Agreements & Documents (was Contracts) ──────────────────────────────────────
+
+enum AgreementStatus {
+  DRAFT
+  SENT
+  SIGNED
+  EXPIRED
+  CANCELLED
+}
+
+enum AgreementType {
+  LICENSE
+  SUBSCRIPTION
+  SERVICE
+}
+
+model Agreement {
+  id                 String          @id @default(cuid())
+  type               AgreementType
+  title              String
+  description        String?
+  status             AgreementStatus @default(DRAFT)
+  partyOneId         String
+  partyOne           User            @relation("AgreementPartyOne", fields: [partyOneId], references: [id], onDelete: Cascade)
+  partyTwoId         String
+  partyTwo           User            @relation("AgreementPartyTwo", fields: [partyTwoId], references: [id], onDelete: Cascade)
+  solutionId         String?
+  solution           Solution?       @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  partnerId          String?
+  partner            Partner?        @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  startDate          DateTime?
+  endDate            DateTime?
+  value              Int?
+  currency           String          @default("EUR")
+  signedByPartyOneAt DateTime?
+  signedByPartyTwoAt DateTime?
+  eSignatureRef      String?
+  metadata           Json?
+  createdById        String
+  createdBy          User            @relation("AgreementCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  documents AgreementDocument[]
+
+  @@index([partyOneId])
+  @@index([partyTwoId])
+  @@index([solutionId])
+  @@index([status])
+  @@index([partnerId])
+}
+
+model AgreementDocument {
+  id          String    @id @default(cuid())
+  agreementId String
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  name        String
+  url         String
+  mimeType    String?
+  uploadedAt  DateTime  @default(now())
+
+  @@index([agreementId])
+}
+
+// ── Conversations & Messages ────────────────────────────────────────────────────
+
+model Conversation {
+  id         String    @id @default(cuid())
+  subject    String?
+  solutionId String?
+  solution   Solution? @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  partnerId  String?
+  partner    Partner?  @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([solutionId])
+  @@index([partnerId])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  type           MessageType  @default(TEXT)
+  attachments    String[]
+  replyToId      String?
+  editedAt       DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+// ── Reviews & Ratings ───────────────────────────────────────────────────────────
+
+enum ReviewTargetType {
+  SOLUTION
+  PARTNER
+  SERVICE
+}
+
+model Review {
+  id         String           @id @default(cuid())
+  reviewerId String
+  reviewer   User             @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  targetType ReviewTargetType
+  targetId   String
+  rating     Int
+  title      String?
+  content    String?
+  moderated  Boolean          @default(false)
+  approved   Boolean          @default(true)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([reviewerId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@index([reviewerId])
+  @@index([approved])
+}
+
+/// Key-value store for editable platform configuration (e.g. email branding).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Cache of machine translations of dynamic/DB content (e.g. solution copy),
+/// keyed by sha256(locale + "\n" + sourceText) so each string is translated once.
+model Translation {
+  hash      String   @id
+  locale    String
+  text      String
+  createdAt DateTime @default(now())
+}
+
+/// Push-notification device tokens registered by the mobile (Capacitor) app.
+/// Optionally linked to a signed-in user; unique per token (idempotent register).
+model DeviceToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  platform   String // ios | android | web
+  userId     String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now()) @updatedAt
+
+  @@index([userId])
+}
+
+/// API key issued to an external Unskinned product so it can validate reseller codes
+/// and report attributed sales (cross-product reseller/affiliate income sharing).
+model ProductKey {
+  id         String         @id @default(cuid())
+  keyHash    String         @unique // sha256 of the key; plaintext shown once
+  prefix     String // first chars for display
+  name       String // product name, e.g. "the upstream platform"
+  syncUrl    String? // product endpoint to ping for instant code re-sync
+  syncSecret String? // bearer secret that product's sync endpoint expects
+  active     Boolean        @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime       @default(now())
+  revokedAt  DateTime?
+  sales      ResellerSale[]
+}
+
+/// A sale in another product attributed to a Unskinned reseller's referral code.
+/// The reseller earns commission; recorded idempotently on externalId.
+model ResellerSale {
+  id           String      @id @default(cuid())
+  resellerId   String
+  reseller     User        @relation("ResellerExtSales", fields: [resellerId], references: [id], onDelete: Cascade)
+  couponId     String?
+  source       String // product that reported it (ProductKey.name)
+  productKeyId String?
+  productKey   ProductKey? @relation(fields: [productKeyId], references: [id], onDelete: SetNull)
+  amount       Int // gross, cents
+  currency     String      @default("EUR")
+  commission   Int // reseller commission, cents
+  customerRef  String?
+  externalId   String?     @unique // product-supplied idempotency key
+  status       String      @default("COMPLETED") // COMPLETED | REFUNDED
+  createdAt    DateTime    @default(now())
+
+  @@index([resellerId])
+  @@index([productKeyId])
+}
+
+// ── Notifications, Blog & Quotes (platform depth) ───────────────────────────────
+
+/**
+ * In-app notification for a user (bell inbox).
+ */
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @default("info") // info | demo | review | payout | quote | system
+  title     String
+  body      String?
+  url       String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+/**
+ * Blog / content post (marketing + SEO).
+ */
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  body        String // markdown/plain
+  coverImage  String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([published, publishedAt])
+}
+
+/**
+ * A project the group has delivered or is developing — /projects and
+ * /projects/[slug]. Authored in the central console (/central/projects). Nothing
+ * is seeded: the brief forbids inventing projects, so an empty table renders the
+ * honest empty state until someone publishes a real one.
+ */
+model Project {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  body        String // markdown/plain
+  /// Sector slug, one of the six SECTORS in brand-content.ts.
+  sector      String?
+  /// PLANNED | ONGOING | COMPLETED
+  status      String   @default("ONGOING")
+  coverImage  String?
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([sector])
+}
+
+/**
+ * A job opening — /careers and /careers/[slug]. Authored in the central console
+ * (/central/vacancies). Nothing is seeded for the same reason as Project.
+ */
+model Vacancy {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  summary     String
+  body        String // markdown/plain
+  department  String?
+  location    String
+  /// ON_SITE | REMOTE | HYBRID
+  workMode    String    @default("ON_SITE")
+  /// FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP
+  type        String    @default("FULL_TIME")
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([published, publishedAt])
+}
+
+/**
+ * Quote / proposal for bespoke, high-value services.
+ */
+model Quote {
+  id          String    @id @default(cuid())
+  clientId    String
+  client      User      @relation("QuoteClient", fields: [clientId], references: [id], onDelete: Cascade)
+  solutionId  String?
+  solution    Solution? @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+  title       String
+  note        String?
+  amountCents Int?
+  currency    String    @default("EUR")
+  status      String    @default("REQUESTED") // REQUESTED | SENT | ACCEPTED | DECLINED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+}
+
+/**
+ * Append-only domain-event log (event bus foundation). Emitting is additive —
+ * existing sync flows are untouched; async consumers read from this log.
+ */
+model DomainEvent {
+  id        String   @id @default(cuid())
+  type      String // e.g. user.registered, payment.succeeded, solution.published, quote.accepted
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([createdAt])
+}
+
+/// "Our workforce" — the people on the public /cards page, managed from
+/// /central/workforce. Rows override the built-in CARD_PEOPLE list; an empty
+/// table falls back to it, so the page renders unchanged until someone edits.
+model WorkforcePerson {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  position  Int     @default(0)
+  published Boolean @default(true)
+
+  name     String
+  /// Legacy translated role key ("founder" | "ops"). When set it wins, so the
+  /// hand-written role translations in messages.ts keep being used.
+  roleKey  String?
+  /// Free-text role per locale for anyone added later: { en: "...", es: "..." }.
+  roleCopy Json?
+
+  email    String
+  location String
+  linkedin String?
+  photo    String?
+
+  /// [{ key: "primaryMobile" | "secondaryMobile" | "company", value, href }]
+  phones          Json
+  whatsappDisplay String?
+  whatsappHref    String?
+
+  /// Slugs of the Branch rows this person belongs to. Their contact address on
+  /// the card and in the vCard is derived from these, in order.
+  branchSlugs Json?
+
+  /// Hand-made assets for the seeded people; generated on demand when null.
+  qrPath  String?
+  vcfPath String?
+
+  /// The GM-OS portal account for this person, when they have one. Non-owning
+  /// side — TeamMember holds the key, so this adds no column here.
+  teamMember TeamMember?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
+}
+
+/// A legal entity / office. Configured at /central/branches and used as the
+/// source of the contact address on every business card: a person selects the
+/// branch(es) they belong to and the card and vCard follow.
+// ═══════════════════════════════════════════════════════════════════════════
+// FIN-01 — general ledger
+//
+// Money is Decimal(18,4) per D-001 and docs/architecture/002-money-representation.md.
+// Four places because a line is a quantity times a unit cost; presentation
+// rounds to two once, at the edge. Never Float, and never mixed with the
+// integer-minor-unit payment tables that predate this.
+//
+// Rules live in `@app/core` ledger.ts: balanced postings, period locks,
+// immutable posted history, corrections by reversal.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// A chart-of-accounts entry. Scoped to a company: an account belongs to one
+/// legal entity and posting across that boundary is refused.
+model LedgerAccount {
+  id   String @id @default(cuid())
+  /// 4–10 digits, unique within the company.
+  code String
+  name String
+
+  /// ASSET | LIABILITY | EQUITY | INCOME | EXPENSE
+  type String
+
+  /// Headings group for reporting and cannot be posted to.
+  postable Boolean @default(true)
+  active   Boolean @default(true)
+
+  /// Company code — the same scope axis as everything else (ORG-ES, …).
+  companyId String
+
+  /// Set only where an account is held in a single currency other than the
+  /// company's base. Null means the company's base currency.
+  currency String?
+
+  parentCode String?
+
+  lines PostingLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, code])
+  @@index([companyId, type])
+  @@index([companyId, active])
+}
+
+/// An accounting period, and whether anything may still be posted into it.
+model AccountingPeriod {
+  id        String @id @default(cuid())
+  companyId String
+  /// YYYY-MM.
+  period    String
+
+  /// OPEN | CLOSED | LOCKED. Closed stops ordinary posting; locked is final.
+  status String @default("OPEN")
+
+  closedAt   DateTime?
+  closedById String?
+
+  @@unique([companyId, period])
+  @@index([companyId, status])
+}
+
+/// A journal entry. Balanced, or it is not posted.
+model JournalEntry {
+  id        String @id @default(cuid())
+  companyId String
+
+  /// Human reference, unique per company.
+  reference String
+
+  /// The date the entry belongs to. Decides its period, which decides whether
+  /// it can be posted at all.
+  date   DateTime
+  period String
+
+  currency String
+
+  /// DRAFT | POSTED | REVERSED. A posted entry is never edited — the only
+  /// correction is a reversal, which is its own entry with its own date.
+  state String @default("DRAFT")
+
+  memo String?
+
+  /// Set on the reversing entry, pointing at what it reverses.
+  reversesEntryId String?       @unique
+  reverses        JournalEntry? @relation("Reversal", fields: [reversesEntryId], references: [id], onDelete: Restrict)
+  reversedBy      JournalEntry? @relation("Reversal")
+
+  /// Totals, stored so a trial balance does not have to re-sum every line.
+  /// Written only at posting, from the same values the balance check used.
+  totalDebit  Decimal @default(0) @db.Decimal(18, 4)
+  totalCredit Decimal @default(0) @db.Decimal(18, 4)
+
+  postedAt   DateTime?
+  postedById String?
+
+  lines PostingLine[]
+
+  createdAt DateTime @default(now())
+  createdById String?
+
+  @@unique([companyId, reference])
+  @@index([companyId, period, state])
+  @@index([companyId, date])
+  @@index([state])
+}
+
+/// One side of one posting.
+///
+/// Exactly one of debit and credit is non-zero, both are non-negative, and the
+/// side carries the meaning — a negative debit is a credit written confusingly
+/// and makes every later sum ambiguous.
+model PostingLine {
+  id      String       @id @default(cuid())
+  entryId String
+  entry   JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  accountId String
+  account   LedgerAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  debit  Decimal @default(0) @db.Decimal(18, 4)
+  credit Decimal @default(0) @db.Decimal(18, 4)
+
+  description String?
+
+  /// Cost dimensions, so a figure can be traced to what it was for. PROJ-01
+  /// job costing reads these.
+  projectId    String?
+  costCentreId String?
+  departmentId String?
+
+  @@index([entryId])
+  @@index([accountId])
+  @@index([projectId])
+}
+
+/// FIN-01 receivables and payables.
+///
+/// One table for both, because a customer invoice and a supplier bill are the
+/// same shape pointed in opposite directions. `side` decides which. Keeping
+/// them apart would mean two implementations of part-payment, and only one of
+/// them would stay correct.
+model SalesInvoice {
+  id        String @id @default(cuid())
+  companyId String
+
+  /// RECEIVABLE (we are owed) | PAYABLE (we owe).
+  side String
+
+  /// Unique per company per side, so AR and AP can number independently.
+  number String
+
+  /// The counterparty. A customer for AR, a supplier for AP.
+  partyRef  String
+  partyName String?
+
+  currency String
+
+  issuedOn DateTime
+  dueOn    DateTime
+
+  /// DRAFT | ISSUED | PART_PAID | PAID | VOID | WRITTEN_OFF.
+  /// Derived from the allocations by `stateAfter`, never set by hand.
+  state String @default("DRAFT")
+
+  /// Totals at issue, frozen. Recomputing them later would restate a document
+  /// that exists in somebody else's records too.
+  netTotal   Decimal @default(0) @db.Decimal(18, 4)
+  taxTotal   Decimal @default(0) @db.Decimal(18, 4)
+  grossTotal Decimal @default(0) @db.Decimal(18, 4)
+
+  /// The journal this invoice posted, once issued.
+  journalEntryId String? @unique
+
+  memo String?
+
+  lines       InvoiceLine[]
+  allocations PaymentAllocation[]
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  @@unique([companyId, side, number])
+  @@index([companyId, side, state])
+  @@index([companyId, dueOn])
+  @@index([partyRef])
+}
+
+model InvoiceLine {
+  id        String       @id @default(cuid())
+  invoiceId String
+  invoice   SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description String
+  /// Not money — a count, at four places so partial units are exact.
+  quantity    Decimal @db.Decimal(18, 4)
+  unitPrice   Decimal @db.Decimal(18, 4)
+  /// Percentage. Supplied per line; rates are configuration and are never
+  /// decided in code (D-003 applies to tax as well as payroll).
+  taxRatePercent Decimal? @db.Decimal(9, 4)
+
+  /// Where the revenue or cost lands.
+  accountCode String
+  projectId   String?
+
+  @@index([invoiceId])
+  @@index([projectId])
+}
+
+/// A receipt or payment applied to an invoice.
+///
+/// `paymentRef` is unique per invoice, which makes allocation idempotent at the
+/// database as well as in the domain: a redelivered webhook cannot double-count
+/// even if the service check is bypassed.
+model PaymentAllocation {
+  id        String       @id @default(cuid())
+  invoiceId String
+  invoice   SalesInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  /// The receipt or payment this came from.
+  paymentRef String
+  amount     Decimal  @db.Decimal(18, 4)
+  on         DateTime
+
+  /// The journal this allocation posted.
+  journalEntryId String?
+
+  createdAt   DateTime @default(now())
+  createdById String?
+
+  @@unique([invoiceId, paymentRef])
+  @@index([invoiceId])
+  @@index([on])
+}
+
+/// HR-021 / D-003. Which statutory regime applies, and whether its rules exist.
+///
+/// Holds no rates, bands or thresholds and must not. It records that a
+/// jurisdiction is in use, which policy categories somebody with authority has
+/// supplied, and whether payroll under it has been signed off. `payrollBlocked`
+/// in `@app/core` refuses until all of that is true.
+model PayrollJurisdiction {
+  id   String @id @default(cuid())
+  /// ISO 3166-1 alpha-2: ES, CA, EG, AE.
+  code String @unique
+  name String
+
+  /// Supplied policies, keyed by policy category, each carrying its authority
+  /// and when it was supplied. Empty means payroll cannot run.
+  policies Json?
+
+  /// Only true once somebody with authority has accepted responsibility. A
+  /// complete configuration is not the same as a decision to rely on it.
+  enabled Boolean @default(false)
+
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// WF-01. An approval chain, stored as data so it changes without a deployment.
+///
+/// `ApprovalRequest` stays: it is the single gate that decides *whether* an
+/// action needs a human at all, driven by the autonomy matrix. This is the
+/// separate question of *who*, in what order, by when — "manager, then People,
+/// escalating after seventy-two hours" — which a single gate cannot express.
+///
+/// The stages are JSON validated by `definitionProblem` in `@app/core`, not
+/// columns, because a stage list is a list and modelling it as rows buys
+/// nothing here and costs a join on every read.
+model WorkflowDefinition {
+  id      String @id @default(cuid())
+  /// lower_snake_case, e.g. leave_request.
+  code    String
+  version Int    @default(1)
+  name    String
+
+  /// What starts it, e.g. "leave.requested".
+  trigger     String
+  /// What it runs against, e.g. "LeaveRequest".
+  subjectType String
+
+  /// WorkflowStage[]. Validated on write.
+  stages Json
+
+  onApproved String
+  onRejected String
+
+  /// Only one version of a code is live at a time. Superseding rather than
+  /// editing means a run that started under version 1 can still be read back
+  /// against the rules it actually followed.
+  active Boolean @default(true)
+
+  instances WorkflowInstance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, version])
+  @@index([code, active])
+  @@index([trigger])
+}
+
+/// One run of a definition against one subject.
+model WorkflowInstance {
+  id String @id @default(cuid())
+
+  definitionId String
+  definition   WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+
+  /// Denormalised so a run still reads correctly if the definition is retired.
+  definitionCode String
+  version        Int
+
+  subjectType String
+  subjectRef  String
+  /// The company scope this run belongs to.
+  companyId   String?
+
+  /// Who raised it. Cannot also decide it.
+  requestedById String
+  /// Who it is about, for MANAGER_OF_SUBJECT and to stop self-decision.
+  subjectMemberId String?
+
+  currentStageKey String
+  /// RUNNING | APPROVED | REJECTED | WITHDRAWN | EXPIRED
+  state           String @default("RUNNING")
+
+  /// Evidence keys attached so far, checked against a stage's requiredEvidence.
+  evidence Json?
+
+  startedAt      DateTime  @default(now())
+  stageEnteredAt DateTime  @default(now())
+  finishedAt     DateTime?
+
+  decisions WorkflowDecision[]
+
+  @@index([state, currentStageKey])
+  @@index([subjectType, subjectRef])
+  @@index([companyId, state])
+  @@index([definitionCode, state])
+}
+
+/// A single person's decision on a single stage.
+///
+/// A row per decision rather than a column on the instance, because a stage may
+/// need two distinct people and "who decided" is the whole point of a
+/// two-person control.
+model WorkflowDecision {
+  id         String           @id @default(cuid())
+  instanceId String
+  instance   WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  stageKey  String
+  deciderId String
+  /// APPROVE | REJECT
+  outcome   String
+  note      String?
+
+  /// Set when the decider acted for somebody else. Delegation moves who may
+  /// act, never who is accountable, so both are recorded.
+  onBehalfOf String?
+
+  at DateTime @default(now())
+
+  @@unique([instanceId, stageKey, deciderId])
+  @@index([instanceId, at])
+}
+
+/// AUD-01. The cross-cutting audit record.
+///
+/// Six domain event tables already exist — DocumentEvent, TaskEvent,
+/// FolderEvent, JmlEvent, OpportunityStageEvent and the older AuditLog — and
+/// each answers a question about one domain. None answers "what happened across
+/// the system, and who did it", which is what an auditor asks.
+///
+/// This does not replace them. A document's history belongs on the document and
+/// is rendered there. What this adds is one place where anything worth auditing
+/// also lands, with a correlation id so a request that touched four domains
+/// reads as one event instead of four unrelated ones.
+///
+/// Payloads are redacted before they are written: secrets are omitted entirely,
+/// money is replaced with a marker but the key survives, because "the salary
+/// changed" is the fact worth keeping. See `@app/core` `audit.ts`.
+model AuditEvent {
+  id String @id @default(cuid())
+
+  /// domain.thing.verb, lowercase — searched by prefix, so the convention is
+  /// enforced rather than encouraged.
+  action String
+
+  /// HUMAN | AGENT | SYSTEM.
+  actorKind String
+  actorId   String
+  actorName String?
+
+  /// What was acted on.
+  entityType String
+  entityRef  String
+
+  /// The company this belongs to. Audit reads obey the same scope as the
+  /// records they describe, or the log becomes a way to learn what happens in a
+  /// company you cannot see.
+  companyId String?
+
+  /// Ties together every row written while serving one request.
+  correlationId String?
+
+  /// Only the fields that differ, already redacted.
+  beforeJson Json?
+  afterJson  Json?
+  note       String?
+
+  ip        String?
+  userAgent String?
+
+  at DateTime @default(now())
+
+  @@index([at])
+  @@index([companyId, at])
+  @@index([entityType, entityRef, at])
+  @@index([actorId, at])
+  @@index([correlationId])
+  @@index([action, at])
+}
+
+/// ORG-01. The parent of a set of companies.
+///
+/// Separate from Company so a group-wide figure has something to roll up to
+/// without every query guessing at which companies belong together.
+model BusinessGroup {
+  id   String @id @default(cuid())
+  name String @unique
+
+  companies Company[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// ORG-01. A legal entity, and the company scope axis.
+///
+/// `code` is the natural key and is the same string already written onto every
+/// record as `entityId` — ORG-ES, ORG-CA and so on. That is why this promotes
+/// the existing `ENTITIES` constant rather than introducing a `companyId`:
+/// every historical record keeps pointing at the right company with no
+/// backfill, and `access.ts` already compares on it.
+///
+/// Rules live in `@app/core` `company.ts`.
+model Company {
+  id   String @id @default(cuid())
+  /// The natural key. Matches TeamMember.entityId, ControlledDocument.entityId, etc.
+  code String @unique
+
+  legalName String
+  country   String
+  /// ISO 4217. The unit every figure recorded against this company is
+  /// denominated in, which is why changing it after anything is posted is
+  /// refused rather than warned about.
+  baseCurrency String @default("EUR")
+
+  /// ACTIVE | PLANNED | OPERATING_LOCATION | DORMANT | CLOSED.
+  /// OPERATING_LOCATION is not a registered entity — it has staff and a
+  /// hierarchy but no registration, and nothing may be filed against it as
+  /// though it were a company.
+  status String @default("ACTIVE")
+
+  registrationLabel String?
+  registrationValue String?
+  taxId             String?
+
+  groupId String?
+  group   BusinessGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  /// The public site's office cards, where one maps to this company. Branch is
+  /// the marketing record and is left as it was; this only reconciles them.
+  branches Branch[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([groupId])
+}
+
+model Branch {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+
+  /// Optional link to the legal entity this office belongs to. Optional because
+  /// the public branch cards predate companies and some are locations rather
+  /// than entities.
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  position  Int     @default(0)
+  published Boolean @default(true)
+
+  /// Short display name, e.g. "Spain" — shown on the card.
+  country String
+  /// Optional flag emoji for the console and card chrome.
+  flag    String?
+
+  legalName String
+  legalForm String?
+
+  /// Registration is labelled differently per country: CIF / Licence /
+  /// Corporation number, so the label travels with the value.
+  registrationLabel String?
+  registrationNo    String?
+  taxLabel          String?
+  taxNo             String?
+  authority         String?
+
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  region       String?
+  postalCode   String?
+  countryName  String
+
+  phone String?
+  email String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
+}
+
+/// Editable website content cards (/central/site-content).
+/// Rows override the hardcoded defaults in apps/web/src/lib/content.ts and
+/// licence-activities.ts; when a section has no rows the site falls back to
+/// those constants, so an empty table renders exactly as before.
+model SiteCard {
+  id        String   @id @default(cuid())
+  section   String // services | differentiators | operating | stats | licence
+  slug      String // stable key: SAAS_PLATFORM, uae-ai-research, …
+  position  Int      @default(0)
+  published Boolean  @default(true)
+  /// Per-locale copy, e.g. { en: { title, blurb }, es: { … } }. A locale left
+  /// blank falls back to machine translation of the English text at render time.
+  copy      Json
+  /// Untranslated extras: category key, licence code, entity, stat value, …
+  meta      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([section, slug])
+  @@index([section, position])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GM-OS — Unskinned Core.
+//
+// This is the database half of the controlled package vendored at /gmos. The
+// enums and required fields below are transcribed from its configuration, not
+// invented here:
+//
+//   roles.csv                   → GmRole, ApprovalLevel
+//   departments.csv             → department codes (validated in @app/core)
+//   entities.csv                → entity ids (ORG-ES, ORG-UAE, ORG-CA)
+//   task.schema.json            → TaskState, TaskPriority, required Task fields
+//   universal_task_lifecycle    → the legal TaskState transitions
+//   document_metadata.schema    → DocState, Confidentiality, required Doc fields
+//   document_lifecycle.yaml     → the controls on each DocState
+//   autonomy_matrix.yaml        → GateKind, and which actions need which gate
+//   10_AI_AGENTS_CATALOGUE.csv  → the seeded agent register
+//
+// If you change the controlled config, a drift test in @app/core fails until
+// this schema and its typed constants are brought back into line. That is the
+// point: the config is the authority, the code follows it.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// roles.csv. Approval authority comes from ApprovalLevel, not from this — a
+/// Department Manager approves at A2 whatever their title happens to be.
+enum GmRole {
+  /// Reserved matters only. Not an operational tier.
+  BOARD
+  CEO
+  COO
+  CFO
+  CTO
+  DOC_CONTROLLER
+  /// Country or entity general manager.
+  ENTITY_GM
+  FUNCTIONAL_DIRECTOR
+  MANAGER
+  PROJECT_MANAGER
+  EMPLOYEE
+  /// Engaged, not employed.
+  CONTRACTOR
+  /// Counterparties. Recorded, but never given a portal account.
+  EXTERNAL
+  /// AI Orchestrator. A real, restricted identity — agents act as this, never
+  /// as a person. approval_level A0: prepare only.
+  AI_OPS
+  /// Technical custody of servers, backups and deployments. Deliberately
+  /// separate from business decision-making: this role approves nothing.
+  INFRA_ADMIN
+}
+
+/// approval_limits.csv. A0 prepare-only through A4 board/shareholder.
+enum ApprovalLevel {
+  A0
+  A1
+  A2
+  A3
+  A4
+}
+
+enum TeamStatus {
+  ACTIVE
+  SUSPENDED
+  OFFBOARDED
+}
+
+/// data_classification.md — five levels. PRIVILEGED covers protected legal and
+/// investigation material and is deliberately above RESTRICTED.
+enum Confidentiality {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
+  PRIVILEGED
+}
+
+/// task.schema.json + universal_task_lifecycle.yaml. ARCHIVED is in the
+/// lifecycle's state list; CANCELLED is in the schema's enum. Both are here.
+enum TaskState {
+  NEW
+  TRIAGED
+  PLANNED
+  ASSIGNED
+  IN_PROGRESS
+  BLOCKED
+  REVIEW
+  APPROVED
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+/// task.schema.json — P0 highest.
+enum TaskPriority {
+  P0
+  P1
+  P2
+  P3
+}
+
+/// document_lifecycle.yaml. DELETED is a tombstone: the row survives with its
+/// audit trail, only the stored bytes go.
+enum DocState {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  EXECUTED
+  SUPERSEDED
+  ARCHIVED
+  DELETION_PENDING
+  DELETED
+}
+
+/// autonomy_matrix.yaml. The gate an action must pass before it takes effect.
+enum GateKind {
+  AUTO
+  AUTO_WITH_AUDIT
+  HUMAN_APPROVAL
+  HUMAN_ONLY
+  DUAL_HUMAN_APPROVAL
+  RECORDS_OWNER_AND_LEGAL_APPROVAL
+  SECURITY_OWNER_APPROVAL
+}
+
+enum ActorKind {
+  HUMAN
+  AGENT
+  SYSTEM
+}
+
+// ── Identity ───────────────────────────────────────────────────────────────
+
+/// A colleague with access to the team portal.
+///
+/// access_control_policy.md: "Identity is individual; shared accounts are
+/// prohibited." There is no shared login and no service account that maps to a
+/// person — agents get their own AI_OPS identity instead.
+///
+/// No password column on the normal path: members authenticate with their real
+/// mailbox credentials, checked against Dovecot at sign-in and never stored.
+/// `portalPasswordHash` is populated only for someone who came in by magic link
+/// and chose a portal-only password.
+model TeamMember {
+  id     String     @id @default(cuid())
+  email  String     @unique
+  name   String
+  title  String?
+  photo  String?
+  locale String?
+  role   GmRole     @default(EMPLOYEE)
+  status TeamStatus @default(ACTIVE)
+
+  /// entities.csv id — ORG-ES, ORG-UAE, ORG-CA.
+  entityId     String?
+  /// departments.csv id — GOV, OPS, FIN, PEO, COM, DEL, TEC, MKT, LRC.
+  departmentId String?
+
+  /// Ceiling on what this person may approve. Derived from role at creation,
+  /// then editable: a manager can be granted A3 for a specific mandate.
+  approvalLevel ApprovalLevel   @default(A0)
+  /// Highest confidentiality this person may read. need-to-know beyond this
+  /// still applies per record.
+  clearance     Confidentiality @default(INTERNAL)
+
+  managerId String?
+  manager   TeamMember?  @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
+  reports   TeamMember[] @relation("TeamManager")
+
+  personId String?          @unique
+  person   WorkforcePerson? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  /// The seat this person occupies in the organisation chart, if any. Somebody
+  /// can exist without a seat — a new joiner before placement — and a seat can
+  /// exist without somebody, which is what a vacancy is.
+  positionId String?      @unique
+  position   OrgPosition? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+
+  /// Operations held beyond this person's role, as a CapabilityGrant. The
+  /// access policy requires an exception to carry a reason, an approver and an
+  /// expiry, so this is a record rather than a flag. See @app/core/permissions.
+  grantedCapabilities Json?
+
+  portalPasswordHash String?
+
+  /// Second factor. §13 requires MFA; @app/core decides who it is required of
+  /// — approvers, group-wide roles and anybody holding an elevated capability.
+  /// Everyone else may enrol and is encouraged to, but is not blocked.
+  totpSecret      String?
+  totpEnabled     Boolean   @default(false)
+  totpConfirmedAt DateTime?
+  /// SHA-256 of each unused recovery code. Hashed, so a database dump does not
+  /// hand over a way round the second factor.
+  recoveryCodes   Json?
+
+  /// The statutory regime this person falls under, when it is not simply the
+  /// one their company defaults to — a secondment or cross-border contract.
+  /// Null means follow DEFAULT_JURISDICTION_FOR_COMPANY.
+  jurisdiction String?
+
+  /// When they were last invited, so a reminder is distinguishable from a
+  /// first approach and nobody is spammed by a second click.
+  invitedAt   DateTime?
+  invitedById String?
+
+  lastLoginAt  DateTime?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions           TeamSession[]
+  loginTokens        TeamLoginToken[]
+  employeeRecord     EmployeeRecord?
+  leaveRequests      LeaveRequest[]       @relation("LeaveSubject")
+  leaveDecisions     LeaveRequest[]       @relation("LeaveDecider")
+  leaveBalances      LeaveBalance[]
+  jmlEvents          JmlEvent[]           @relation("JmlSubject")
+  cardRequests       CardChangeRequest[]  @relation("CardRequester")
+  headOf             Department[]         @relation("DepartmentHead")
+  packItems          EmployeeDocument[]   @relation("PackSubject")
+  ownedCustomers     Customer[]           @relation("CustomerOwner")
+  ownedOpportunities Opportunity[]        @relation("OpportunityOwner")
+  crmActivities      CrmActivity[]        @relation("ActivityActor")
+  trainingRecords    TrainingRecord[]
+  assetsHeld         AssetAssignment[]    @relation("AssetHolder")
+  requestedTasks     Task[]               @relation("TaskRequester")
+  ownedTasks         Task[]               @relation("TaskOwner")
+  assignedTasks      Task[]               @relation("TaskAssignee")
+  approvedTasks      Task[]               @relation("TaskApprover")
+  ownedDocs          ControlledDocument[] @relation("DocOwner")
+  custodianDocs      ControlledDocument[] @relation("DocCustodian")
+  decisions          Decision[]
+  announcements      Announcement[]
+  approvals          ApprovalRequest[]    @relation("ApprovalDecider")
+
+  @@index([status])
+  @@index([managerId])
+  @@index([entityId, departmentId])
+}
+
+/// An active portal sign-in. The cookie carries a random token; only its hash
+/// is stored, so reading the table never yields a usable session.
+model TeamSession {
+  id        String     @id @default(cuid())
+  memberId  String
+  member    TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tokenHash String     @unique
+  /// How identity was proven: "mailbox", "magic-link", "invite" or "sso".
+  method    String
+  /// PENDING_MFA until the second factor is presented, then ACTIVE. A session
+  /// in PENDING_MFA authenticates nothing except the right to finish signing in.
+  stage     String     @default("ACTIVE")
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime   @default(now())
+
+  @@index([memberId])
+  @@index([expiresAt])
+}
+
+/// Single-use magic link — hashed, short-lived, burned on use.
+model TeamLoginToken {
+  id        String     @id @default(cuid())
+  memberId  String
+  member    TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tokenHash String     @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime   @default(now())
+
+  @@index([memberId])
+}
+
+// ── Tasks (task.schema.json, universal_task_lifecycle.yaml) ────────────────
+
+/// A unit of governed work. required_controls from the lifecycle YAML —
+/// owner, due date, priority, inputs, expected outputs, acceptance criteria,
+/// destination — are enforced in @app/core before a task may leave TRIAGED,
+/// which is why several are nullable here but not in practice.
+model Task {
+  id  String @id @default(cuid())
+  /// ORG-ES-OPS-2026-0007 style reference.
+  ref String @unique
+
+  title       String
+  description String?
+
+  state    TaskState    @default(NEW)
+  priority TaskPriority @default(P2)
+
+  requesterId String
+  requester   TeamMember @relation("TaskRequester", fields: [requesterId], references: [id])
+  /// Accountable human. Never an agent — agents execute, humans own.
+  ownerId     String
+  owner       TeamMember @relation("TaskOwner", fields: [ownerId], references: [id])
+
+  /// Who does the work: a colleague, or an agent by key, never both.
+  assigneeId String?
+  assignee   TeamMember? @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  agentKey   String?
+
+  approverId String?
+  approver   TeamMember? @relation("TaskApprover", fields: [approverId], references: [id], onDelete: SetNull)
+
+  entityId        String?
+  departmentId    String?
+  project         String?
+  confidentiality Confidentiality @default(INTERNAL)
+
+  /// required_controls.
+  inputs             Json?
+  expectedOutputs    Json?
+  acceptanceCriteria String?
+  destination        String?
+  dependencies       Json?
+  /// Appendix A: logs, approvals, source files and final records. AI-QA checks
+  /// this before a task in review is treated as finished.
+  evidence           Json?
+
+  dueAt       DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  /// Set when overdue escalation has fired, so it fires once.
+  escalatedAt DateTime?
+
+  aiConfidence Float?
+
+  parentId String?
+  parent   Task?   @relation("TaskParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children Task[]  @relation("TaskParent")
+
+  documentId String?
+  document   ControlledDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    TaskEvent[]
+  agentRuns AgentRun[]
+  approvals ApprovalRequest[]
+
+  @@index([ownerId])
+  @@index([assigneeId])
+  @@index([state, dueAt])
+  @@index([entityId, departmentId])
+}
+
+/// Immutable task history. Nothing updates or deletes rows here — a correction
+/// is another event. Human override is always available and itself recorded.
+model TaskEvent {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  actorKind ActorKind
+  /// Member id, agent key, or "system".
+  actorRef  String
+  actorName String?
+
+  action    String
+  fromState TaskState?
+  toState   TaskState?
+  note      String?
+  meta      Json?
+
+  at DateTime @default(now())
+
+  @@index([taskId, at])
+}
+
+// ── Document control (document_metadata.schema.json) ───────────────────────
+
+/// A controlled record. Folders are a presentation layer; this row is the
+/// authority. An approved version is never overwritten — a revision creates a
+/// new row that supersedes the previous one.
+model ControlledDocument {
+  id    String @id @default(cuid())
+  /// ORG-ES-OPS-SOP-2026-0007 — matches ^ORG-[A-Z0-9-]+$ per the JSON schema.
+  docId String @unique
+
+  title        String
+  entityId     String
+  departmentId String
+  /// document_types.csv code — POL, SOP, CTR, MIN, DEC, INV, HRF, PRJ, TEC, MKT.
+  docType      String
+  year         Int
+  sequence     Int
+  shortTitle   String
+  /// Role accountable for the content, per the JSON schema's owner_role.
+  ownerRole    String
+
+  versionMajor Int @default(0)
+  versionMinor Int @default(1)
+
+  state           DocState        @default(DRAFT)
+  confidentiality Confidentiality @default(INTERNAL)
+
+  ownerId     String
+  owner       TeamMember  @relation("DocOwner", fields: [ownerId], references: [id])
+  custodianId String?
+  custodian   TeamMember? @relation("DocCustodian", fields: [custodianId], references: [id], onDelete: SetNull)
+
+  /// document_types.csv default_retention — PERM, ACTIVE+7Y, EXPIRY+10Y, …
+  retentionClass String
+  retainUntil    DateTime?
+  /// A legal hold blocks disposal regardless of the retention schedule.
+  legalHold      Boolean   @default(false)
+
+  storagePath String?
+  /// source_hash — integrity, and duplicate detection on intake.
+  sha256      String?
+  sizeBytes   Int?
+  mimeType    String?
+  language    String  @default("EN")
+
+  aiConfidence Float?
+  relatedIds   Json?
+
+  supersedesId String?             @unique
+  supersedes   ControlledDocument? @relation("DocSupersede", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy ControlledDocument? @relation("DocSupersede")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    DocumentEvent[]
+  tasks     Task[]
+  agentRuns AgentRun[]
+  approvals ApprovalRequest[]
+
+  @@unique([entityId, departmentId, docType, year, sequence])
+  @@index([state])
+  @@index([confidentiality])
+  @@index([retainUntil])
+}
+
+/// Immutable document history — the evidentiary record.
+model DocumentEvent {
+  id         String             @id @default(cuid())
+  documentId String
+  document   ControlledDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  actorKind ActorKind
+  actorRef  String
+  actorName String?
+
+  action    String
+  fromState DocState?
+  toState   DocState?
+  note      String?
+  meta      Json?
+
+  at DateTime @default(now())
+
+  @@index([documentId, at])
+}
+
+// ── Approvals (autonomy_matrix.yaml) ───────────────────────────────────────
+
+/// A pending human gate. Everything the autonomy matrix does not mark `auto`
+/// lands here first: external sends, signatures, payroll, bank details,
+/// permanent deletion, restricted access changes.
+///
+/// DUAL_HUMAN_APPROVAL and the deletion gate need two distinct deciders, which
+/// is why decisions are rows in ApprovalDecision rather than a column here.
+model ApprovalRequest {
+  id     String   @id @default(cuid())
+  /// autonomy_matrix.yaml action key, e.g. "bank_payment".
+  action String
+  gate   GateKind
+
+  taskId     String?
+  task       Task?               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  documentId String?
+  document   ControlledDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  /// What is being asked for, and what would change if granted.
+  summary  String
+  payload  Json?
+  /// Minimum approval level a decider must hold.
+  minLevel ApprovalLevel @default(A2)
+
+  requestedByKind ActorKind
+  requestedByRef  String
+
+  /// PENDING | APPROVED | REJECTED | EXPIRED | WITHDRAWN
+  outcome     String      @default("PENDING")
+  decidedAt   DateTime?
+  decidedById String?
+  decidedBy   TeamMember? @relation("ApprovalDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  decisions ApprovalDecision[]
+
+  @@index([outcome, createdAt])
+}
+
+/// One person's vote on a gate. Two rows from two different members are needed
+/// where the matrix demands dual authorisation.
+model ApprovalDecision {
+  id        String          @id @default(cuid())
+  requestId String
+  request   ApprovalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  deciderId String
+  /// APPROVE | REJECT
+  vote      String
+  level     ApprovalLevel
+  note      String?
+  at        DateTime      @default(now())
+
+  @@unique([requestId, deciderId])
+  @@index([requestId])
+}
+
+// ── Agents (10_AI_AGENTS_CATALOGUE.csv) ────────────────────────────────────
+
+/// The agent register. An agent absent from this table cannot run at all, and
+/// one with `enabled = false` can only propose. Agents never impersonate a
+/// person: every run is attributed to the agent key.
+model AgentRegistry {
+  id      String @id @default(cuid())
+  /// AI-ORCH, AI-DOC, AI-SCHED, AI-QA, AI-COMP, AI-REC, AI-REP, AI-KNOW.
+  key     String @unique
+  name    String
+  purpose String
+
+  /// The highest gate this agent may clear on its own. Anything the autonomy
+  /// matrix rates stricter than this becomes an ApprovalRequest.
+  maxGate GateKind @default(AUTO_WITH_AUDIT)
+  enabled Boolean  @default(false)
+
+  /// group_config.json: auto-file at 0.92, human review below 0.70.
+  autoFileConfidence    Float @default(0.92)
+  humanReviewConfidence Float @default(0.7)
+
+  config Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs AgentRun[]
+}
+
+/// One execution — kept whether it applied, was gated, or failed. The
+/// exception, correction and override rates on the management dashboard are
+/// computed from these rows.
+model AgentRun {
+  id       String        @id @default(cuid())
+  agentKey String
+  agent    AgentRegistry @relation(fields: [agentKey], references: [key], onDelete: Cascade)
+
+  taskId     String?
+  task       Task?               @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  documentId String?
+  document   ControlledDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  /// PROPOSED | APPLIED | GATED | REJECTED | FAILED
+  outcome    String
+  confidence Float?
+  /// Why a gate fired, when one did.
+  gateReason String?
+  /// Whether this run was a dry run — nothing was written.
+  dryRun     Boolean @default(false)
+  input      Json?
+  output     Json?
+  error      String?
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([agentKey, startedAt])
+  @@index([outcome])
+}
+
+// ── Decision register (decision.schema.json) ───────────────────────────────
+
+/// A recorded management decision. Blueprint: management decision remains
+/// human — no agent may write one of these.
+model Decision {
+  id      String @id @default(cuid())
+  ref     String @unique
+  subject String
+
+  ownerId String
+  owner   TeamMember @relation(fields: [ownerId], references: [id])
+
+  decision   String
+  rationale  String
+  /// Conditions attached to the decision, if any.
+  conditions Json?
+  relatedIds Json?
+
+  decidedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([decidedAt])
+}
+
+// ── Team communications ────────────────────────────────────────────────────
+
+/// "What's new" on the portal home.
+model Announcement {
+  id       String  @id @default(cuid())
+  title    String
+  body     String
+  /// ALL, an entity id, or a department id.
+  audience String  @default("ALL")
+  pinned   Boolean @default(false)
+
+  authorId String
+  author   TeamMember @relation(fields: [authorId], references: [id])
+
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([publishedAt])
+}
+
+// ── Organisation structure (12_IDENTITY_AND_ACCESS/organization_hierarchy.yaml) ──
+
+/// The twelve tiers. The first eight are the chain of command; the last four
+/// are identity classes that sit beside it and can never hold reports or
+/// business approval authority. @app/core/org enforces that distinction.
+enum OrgTier {
+  BOARD
+  GROUP_CEO
+  EXCO
+  ENTITY_GM
+  FUNCTIONAL_DIRECTOR
+  DEPARTMENT_MANAGER
+  PROJECT_MANAGER
+  EMPLOYEE
+  CONTRACTOR
+  EXTERNAL
+  AI_AGENT
+  INFRA_ADMIN
+}
+
+/// A seat in the organisation chart.
+///
+/// Positions are generated from the structure, people are placed into them.
+/// Separating the two is what lets the chart show an honest vacancy instead of
+/// quietly omitting a role nobody holds — and what stops work being reassigned
+/// to a manager who does not exist.
+model OrgPosition {
+  id   String @id @default(cuid())
+  /// Reads as a path: ORG-ES-OPS-DEPARTMENT_MANAGER, GROUP-EXCO-CFO.
+  code String @unique
+
+  tier  OrgTier
+  role  GmRole
+  title String
+
+  /// Null for group-level seats.
+  entityId     String?
+  departmentId String?
+
+  approvalLevel ApprovalLevel @default(A0)
+
+  parentId String?
+  parent   OrgPosition?  @relation("OrgParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children OrgPosition[] @relation("OrgParent")
+
+  /// Non-owning side — TeamMember holds the key. Null means the seat is vacant.
+  holder TeamMember?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId, tier])
+  @@index([parentId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HR
+//
+// The employee file is the most sensitive record here, so two things are
+// deliberate in the shape below. Compensation is its own table rather than
+// columns on EmployeeRecord, because "who may see the salary" is a different
+// question from "who may see the file" and merging them would answer both at
+// once. And business-card details are not duplicated onto the employee record:
+// the card remains the single published source, and an employee asks for a
+// correction rather than editing it.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+  INTERN
+  ADVISOR
+}
+
+enum EmploymentStatus {
+  ONBOARDING
+  ACTIVE
+  ON_LEAVE
+  NOTICE
+  OFFBOARDED
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  UNPAID
+  PARENTAL
+  COMPASSIONATE
+  PUBLIC_HOLIDAY
+}
+
+enum LeaveStatus {
+  DRAFT
+  REQUESTED
+  APPROVED
+  REJECTED
+  CANCELLED
+  TAKEN
+}
+
+enum JmlKind {
+  JOINER
+  MOVER
+  LEAVER
+}
+
+/// A department, seeded from departments.csv. The per-branch manager seats live
+/// in OrgPosition; this carries what the department is for and who leads it at
+/// group level.
+model Department {
+  id             String  @id @default(cuid())
+  code           String  @unique
+  name           String
+  /// The executive accountable, as named in the controlled config.
+  executiveOwner String
+  purpose        String?
+
+  headId String?
+  head   TeamMember? @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
+
+  position Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// The employee file. RESTRICTED by definition — it is personal data.
+model EmployeeRecord {
+  id       String     @id @default(cuid())
+  memberId String     @unique
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  employeeNo String? @unique
+
+  employmentType EmploymentType   @default(FULL_TIME)
+  status         EmploymentStatus @default(ONBOARDING)
+
+  /// The entity that actually employs them, which is not always the branch
+  /// they sit in — Example Country is an operating location, not an employer.
+  contractEntityId String?
+  workLocation     String?
+
+  startDate       DateTime?
+  probationEndsAt DateTime?
+  noticeGivenAt   DateTime?
+  endDate         DateTime?
+
+  /// Maintained by the employee, not by HR.
+  personalEmail            String?
+  personalPhone            String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  dietaryNotes             String?
+  accessibilityNotes       String?
+
+  /// HR's own notes. Not visible to the employee.
+  hrNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  compensation Compensation[]
+
+  @@index([status])
+}
+
+/// Deliberately separate from the employee file. Nothing populates this
+/// automatically, and reading it is a decision somebody has to make explicitly.
+model Compensation {
+  id       String         @id @default(cuid())
+  recordId String
+  record   EmployeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  currency    String
+  /// Stored in minor units to avoid floating-point money.
+  amountMinor Int
+  /// ANNUAL | MONTHLY | DAILY | HOURLY
+  period      String @default("ANNUAL")
+
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  note          String?
+
+  createdAt DateTime @default(now())
+
+  @@index([recordId, effectiveFrom])
+}
+
+model LeaveRequest {
+  id       String     @id @default(cuid())
+  memberId String
+  member   TeamMember @relation("LeaveSubject", fields: [memberId], references: [id], onDelete: Cascade)
+
+  type   LeaveType
+  status LeaveStatus @default(DRAFT)
+
+  startDate DateTime
+  endDate   DateTime
+  /// Working days, computed at request time and frozen — recalculating later
+  /// would silently change a balance that has already been reconciled.
+  days      Float
+  reason    String?
+
+  decidedById  String?
+  decidedBy    TeamMember? @relation("LeaveDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt    DateTime?
+  decisionNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId, status])
+  @@index([startDate])
+}
+
+model LeaveBalance {
+  id       String     @id @default(cuid())
+  memberId String
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  year Int
+  type LeaveType
+
+  /// Set by HR from the contract. Seeded to the statutory minimum so a balance
+  /// is never zero by accident, but the statutory floor is not the policy.
+  entitledDays Float @default(0)
+  takenDays    Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, year, type])
+}
+
+/// Joiner, mover and leaver. The access policy requires these events to update
+/// access promptly, so the checklist is a record rather than a reminder: an
+/// offboarding cannot be closed while the account is still live.
+model JmlEvent {
+  id       String     @id @default(cuid())
+  memberId String
+  member   TeamMember @relation("JmlSubject", fields: [memberId], references: [id], onDelete: Cascade)
+
+  kind          JmlKind
+  effectiveDate DateTime
+  /// OPEN | COMPLETED | CANCELLED
+  status        String   @default("OPEN")
+
+  /// Keys from JML_STEPS that are done.
+  completedSteps Json?
+  note           String?
+
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([memberId, status])
+}
+
+/// An employee asking HR to correct a published card detail. Card fields are
+/// not self-editable, so this is the route.
+model CardChangeRequest {
+  id          String     @id @default(cuid())
+  requesterId String
+  requester   TeamMember @relation("CardRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  /// One of the CARD_FIELDS.
+  field        String
+  currentValue String?
+  proposed     String
+  reason       String?
+
+  /// PENDING | APPLIED | REJECTED
+  status       String    @default("PENDING")
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+/// One item of somebody's required document pack.
+///
+/// Deliberately separate from ControlledDocument: the requirement exists before
+/// the document does, and "we need a right-to-work check from this person" is a
+/// fact worth recording whether or not anything has been produced. Linking to
+/// the record once it exists is the second half.
+model EmployeeDocument {
+  id       String     @id @default(cuid())
+  memberId String
+  member   TeamMember @relation("PackSubject", fields: [memberId], references: [id], onDelete: Cascade)
+
+  /// Requirement code from the pack definitions.
+  code String
+  name String
+
+  /// MISSING | PROVIDED | VERIFIED | EXPIRED | WAIVED
+  ///
+  /// PROVIDED and VERIFIED are not the same thing. Somebody uploading a file is
+  /// not somebody in HR having looked at it, and for a right-to-work check that
+  /// difference is the entire control.
+  status String @default("MISSING")
+
+  classification Confidentiality @default(RESTRICTED)
+  mandatory      Boolean         @default(true)
+
+  documentId String?
+  dueAt      DateTime?
+  expiresAt  DateTime?
+
+  providedAt   DateTime?
+  verifiedAt   DateTime?
+  verifiedById String?
+  /// Why a mandatory item was waived. Required by the console, not the schema,
+  /// because a waiver without a reason is indistinguishable from an oversight.
+  waivedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memberId, code])
+  @@index([status])
+}
+
+/// A controlled location in the information architecture.
+///
+/// Recorded rather than materialised on disk. The blueprint is explicit that a
+/// document may appear in several views without creating multiple uncontrolled
+/// copies, so building a second filesystem tree beside the content store would
+/// be the duplicate source of truth it warns against.
+///
+/// Empty folders are rows too: the package marks them with `.keep` because a
+/// declared-but-unused location is part of the architecture, and a folder that
+/// is absent says something different from one that is empty.
+model RepositoryFolder {
+  id    String @id @default(cuid())
+  /// Canonical path, e.g. 04_PEOPLE_AND_ORGANIZATION/04_EMPLOYEE_RECORDS.
+  path  String @unique
+  name  String
+  /// Top-level zone, for the access matrix.
+  zone  String
+  depth Int
+
+  /// From the folder's own README where the package supplied one.
+  purpose String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zone])
+  @@index([depth])
+}
+
+/// Structural changes to the repository: folders created, renamed, moved or
+/// deleted, and documents deleted outright by an administrator.
+///
+/// Separate from DocumentEvent on purpose. That table cascades on delete, so
+/// the history of a document goes with the document — which is right for the
+/// record and useless for the one event somebody will actually come looking
+/// for. A deletion has to be recorded somewhere that outlives what it
+/// describes, so it is filed against the folder rather than the row.
+model FolderEvent {
+  id   String @id @default(cuid())
+  /// The folder acted on, or the folder a deleted document was filed in.
+  path String
+
+  /// created | renamed | deleted | document_deleted
+  action    String
+  actorId   String
+  actorName String?
+  detail    String?
+
+  at DateTime @default(now())
+
+  @@index([path, at])
+  @@index([at])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CRM — 06_COMMERCIAL/00_AI_CRM_SYSTEM
+//
+// The rule the module states first, and the one the shape here exists to make
+// impossible to break: one canonical customer, many opportunities, one
+// independent workflow per opportunity, one shared history, no duplicates.
+//
+// Activities point at the customer and optionally at an opportunity, so the
+// customer timeline aggregates without copying anything — the module is
+// explicit that the customer view "aggregates all linked opportunity and
+// contact activity without copying records".
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum CustomerType {
+  ORGANIZATION
+  INDIVIDUAL
+}
+
+enum CustomerStatus {
+  PROSPECT
+  ACTIVE_CUSTOMER
+  INACTIVE
+  BLOCKED
+  ARCHIVED
+}
+
+enum OpportunityStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  ON_HOLD
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum OpportunityType {
+  NEW_PROJECT
+  VARIATION
+  MAINTENANCE
+  SUBSCRIPTION
+  RENEWAL
+  CONSULTANCY
+  PRODUCT_SALE
+  OTHER
+}
+
+enum ActivityType {
+  CALL
+  MEETING
+  EMAIL
+  WHATSAPP
+  NOTE
+  TASK
+  DOCUMENT
+  PROPOSAL
+  STATUS_CHANGE
+  APPROVAL
+  SYSTEM_EVENT
+}
+
+enum ConsentStatus {
+  UNKNOWN
+  LEGITIMATE_INTEREST
+  CONSENTED
+  OPTED_OUT
+}
+
+/// One canonical record per customer organisation or person.
+model Customer {
+  id  String @id @default(cuid())
+  ref String @unique
+
+  customerType  CustomerType @default(ORGANIZATION)
+  displayName   String
+  legalName     String?
+  tradeName     String?
+  /// The strongest duplicate signal there is — the same identifier is the same
+  /// legal entity, so creating a second customer for it is blocked outright.
+  taxId         String?
+  websiteDomain String?
+  primaryEmail  String?
+  primaryPhone  String?
+  country       String?
+
+  status         CustomerStatus  @default(PROSPECT)
+  classification Confidentiality @default(CONFIDENTIAL)
+
+  ownerId String
+  owner   TeamMember @relation("CustomerOwner", fields: [ownerId], references: [id])
+
+  /// Which legal entities may see and trade with this customer.
+  entityScope Json?
+  tags        Json?
+
+  /// Identifiers of records merged into this one. The module requires both
+  /// source identifiers and all history to survive a merge, so nothing is
+  /// deleted — the loser is archived and pointed here.
+  mergedFrom    Json?
+  mergedIntoId  String?
+  mergedInto    Customer?  @relation("CustomerMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedSources Customer[] @relation("CustomerMerge")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts      CustomerContact[]
+  opportunities Opportunity[]
+  activities    CrmActivity[]
+
+  @@index([status])
+  @@index([taxId])
+  @@index([ownerId])
+}
+
+/// A natural person, linked to one or more customers where justified.
+model Contact {
+  id  String @id @default(cuid())
+  ref String @unique
+
+  fullName         String
+  jobTitle         String?
+  emails           Json?
+  phones           Json?
+  preferredChannel String  @default("unknown")
+
+  /// Contacting somebody who opted out is a legal problem, not a preference.
+  consentStatus ConsentStatus @default(UNKNOWN)
+  status        String        @default("active")
+
+  ownerId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers CustomerContact[]
+
+  @@index([consentStatus])
+}
+
+/// A person may belong to several customers — the same individual moves firm.
+model CustomerContact {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  role       String?
+  primary    Boolean  @default(false)
+
+  @@unique([customerId, contactId])
+}
+
+/// One independent workflow. The number is immutable and globally unique.
+model Opportunity {
+  id  String @id @default(cuid())
+  ref String @unique
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  name            String
+  opportunityType OpportunityType  @default(NEW_PROJECT)
+  stage           OpportunityStage @default(NEW)
+
+  ownerId String
+  owner   TeamMember @relation("OpportunityOwner", fields: [ownerId], references: [id])
+
+  entityId            String?
+  currency            String?
+  /// Minor units, to keep money off floating point.
+  estimatedValueMinor Int?
+  probability         Int?
+  expectedCloseDate   DateTime?
+
+  /// Mandatory for LOST, per the business rules.
+  lostReason       String?
+  lostReasonDetail String?
+  /// Both mandatory for ON_HOLD.
+  holdReason       String?
+  followUpDate     DateTime?
+
+  /// "Won requires a named delivery handover owner."
+  handoverOwnerId String?
+
+  closedAt       DateTime?
+  stageEnteredAt DateTime  @default(now())
+  lastActivityAt DateTime?
+  /// Counts inactivity breaches so a second one escalates to the manager.
+  breachCount    Int       @default(0)
+  lastBreachAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activities CrmActivity[]
+  stages     OpportunityStageEvent[]
+
+  @@index([stage])
+  @@index([ownerId])
+  @@index([customerId])
+}
+
+/// Complete transition history. Every opportunity has exactly one current
+/// stage and a full record of how it got there.
+model OpportunityStageEvent {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  fromStage OpportunityStage?
+  toStage   OpportunityStage
+  /// Required on a backward move.
+  reason    String?
+  actorId   String
+  actorName String?
+  at        DateTime          @default(now())
+
+  @@index([opportunityId, at])
+}
+
+/// The shared timeline. Attached to the customer, optionally to one
+/// opportunity — never copied between them.
+model CrmActivity {
+  id String @id @default(cuid())
+
+  activityType ActivityType
+  occurredAt   DateTime
+  summary      String
+  detail       String?
+
+  actorId String
+  actor   TeamMember @relation("ActivityActor", fields: [actorId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  contactIds      Json?
+  sourceUri       String?
+  confidentiality Confidentiality @default(INTERNAL)
+  /// Whether an agent produced this, and from what. The audit standard wants
+  /// provenance on anything a machine wrote.
+  aiGenerated     Boolean         @default(false)
+  provenance      Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, occurredAt])
+  @@index([opportunityId, occurredAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Training and equipment — the two workspace areas that rendered with nothing
+// behind them.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// A course, certification or policy acknowledgement.
+model TrainingRecord {
+  id       String     @id @default(cuid())
+  memberId String
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  title     String
+  provider  String?
+  /// COURSE | CERTIFICATION | POLICY_ACK | INDUCTION
+  kind      String  @default("COURSE")
+  /// Whether the role requires it, so a gap is a compliance issue rather than
+  /// a missed opportunity.
+  mandatory Boolean @default(false)
+
+  /// PLANNED | IN_PROGRESS | COMPLETED | EXPIRED
+  status      String    @default("PLANNED")
+  completedAt DateTime?
+  /// A certification with no expiry recorded is one that silently lapses.
+  expiresAt   DateTime?
+
+  documentId String?
+  note       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId, status])
+  @@index([expiresAt])
+}
+
+/// Company property. Kept as a register rather than a field on the person,
+/// because an asset outlives whoever currently holds it.
+model Asset {
+  id  String @id @default(cuid())
+  ref String @unique
+
+  name         String
+  /// LAPTOP | PHONE | MONITOR | VEHICLE | ACCESS_CARD | OTHER
+  category     String  @default("OTHER")
+  serialNumber String?
+  entityId     String?
+
+  purchasedAt DateTime?
+  /// Minor units.
+  valueMinor  Int?
+  currency    String?
+
+  /// IN_STOCK | ISSUED | IN_REPAIR | RETIRED | LOST
+  status String  @default("IN_STOCK")
+  note   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments AssetAssignment[]
+
+  @@index([status])
+  @@index([category])
+}
+
+/// Who holds what, and when they gave it back. A row per period rather than a
+/// pointer, so the history of an asset survives being reissued.
+model AssetAssignment {
+  id      String @id @default(cuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   TeamMember @relation("AssetHolder", fields: [memberId], references: [id], onDelete: Cascade)
+
+  issuedAt     DateTime  @default(now())
+  issuedById   String?
+  /// Null while they still hold it. The offboarding checklist reads this.
+  returnedAt   DateTime?
+  returnedToId String?
+  condition    String?
+  note         String?
+
+  @@index([memberId, returnedAt])
+  @@index([assetId, issuedAt])
+}

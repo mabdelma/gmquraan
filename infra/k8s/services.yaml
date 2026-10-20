@@ -1,0 +1,150 @@
+# One Deployment + Service per microservice. Images are built from each
+# services/<svc>/Dockerfile and pushed to the registry. All read shared env from
+# the app-secrets Secret + app-config ConfigMap.
+#
+# Services: auth, catalog, billing, engagement, notifications.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: auth, namespace: app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: auth } }
+  template:
+    metadata: { labels: { app: auth } }
+    spec:
+      containers:
+        - name: auth
+          image: registry.example.com/auth:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /ready, port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10 }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: auth, namespace: app }
+spec:
+  selector: { app: auth }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: catalog, namespace: app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: catalog } }
+  template:
+    metadata: { labels: { app: catalog } }
+    spec:
+      containers:
+        - name: catalog
+          image: registry.example.com/catalog:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /ready, port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10 }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: catalog, namespace: app }
+spec:
+  selector: { app: catalog }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: billing, namespace: app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: billing } }
+  template:
+    metadata: { labels: { app: billing } }
+    spec:
+      containers:
+        - name: billing
+          image: registry.example.com/billing:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /ready, port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10 }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: billing, namespace: app }
+spec:
+  selector: { app: billing }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: engagement, namespace: app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: engagement } }
+  template:
+    metadata: { labels: { app: engagement } }
+    spec:
+      containers:
+        - name: engagement
+          image: registry.example.com/engagement:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /ready, port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10 }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: engagement, namespace: app }
+spec:
+  selector: { app: engagement }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: notifications, namespace: app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: notifications } }
+  template:
+    metadata: { labels: { app: notifications } }
+    spec:
+      containers:
+        - name: notifications
+          image: registry.example.com/notifications:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /ready, port: 8080 }, initialDelaySeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10 }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: notifications, namespace: app }
+spec:
+  selector: { app: notifications }
+  ports: [{ port: 80, targetPort: 8080 }]

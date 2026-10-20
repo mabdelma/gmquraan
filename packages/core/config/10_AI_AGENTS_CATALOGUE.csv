@@ -1,0 +1,9 @@
+agent_id,name,purpose,default_autonomy
+AI-ORCH,Orchestration Agent,"Receives work, decomposes it, resolves dependencies and routes tasks.",advisory_or_controlled_auto
+AI-DOC,Document Control Agent,"Classifies, names, versions, validates metadata and files documents.",advisory_or_controlled_auto
+AI-SCHED,Workforce Scheduling Agent,Matches tasks to available qualified employees and priorities.,advisory_or_controlled_auto
+AI-QA,Quality Agent,"Checks outputs against acceptance criteria, templates and controls.",advisory_or_controlled_auto
+AI-COMP,Compliance Agent,"Screens privacy, legal, policy, retention and approval requirements.",advisory_or_controlled_auto
+AI-REC,Records Agent,"Manages supersession, archival, legal hold and controlled deletion.",advisory_or_controlled_auto
+AI-REP,Reporting Agent,"Produces dashboards, exceptions, decisions and management summaries.",advisory_or_controlled_auto
+AI-KNOW,Knowledge Agent,"Links related records, extracts reusable knowledge and prevents duplication.",advisory_or_controlled_auto

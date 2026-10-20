@@ -1,0 +1,20 @@
+version: 1.0
+rules:
+  - id: legal-contract
+    when: document_type in [contract, nda, mou, legal_notice]
+    destination: 05_LEGAL_RISK_COMPLIANCE/02_CONTRACTS_AND_LEGAL_RECORDS
+    owner_role: Legal/Compliance
+    approval: A3
+  - id: employee-record
+    when: contains_personal_data == true and context == employment
+    destination: 04_PEOPLE_AND_ORGANIZATION/04_EMPLOYEE_RECORDS
+    owner_role: People Manager
+    confidentiality: restricted
+  - id: invoice
+    when: document_type in [invoice, credit_note, receipt]
+    destination: 08_FINANCE_AND_PROCUREMENT/02_REVENUE_AND_INVOICING
+    owner_role: Finance
+  - id: low-confidence
+    when: ai_confidence < 0.92
+    destination: 12_INBOX_AND_QUARANTINE/04_AI_LOW_CONFIDENCE
+    action: request_human_classification

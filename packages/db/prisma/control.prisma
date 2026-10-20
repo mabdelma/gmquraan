@@ -1,0 +1,173 @@
+// The control plane.
+//
+// Who the tenants are, what they pay for, and the state of provisioning them.
+// Deliberately a separate schema and a separate generated client from the
+// tenant datamodel: a query that can read a tenant's documents must not also be
+// able to read the list of every other customer. See
+// docs/architecture/001-tenant-isolation.md.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/control"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CONTROL_DATABASE_URL")
+}
+
+/// A customer.
+model Tenant {
+  id String @id @default(cuid())
+
+  /// Their subdomain label: "acme" in acme.example.com. Lowercase,
+  /// validated by tenantSlugProblem before it ever reaches here.
+  slug String @unique
+
+  /// Display name, shown in their portal and on invoices.
+  name String
+
+  /// The Postgres schema holding their data. Generated here, never derived from
+  /// a request — a schema name built from user input is how this isolation
+  /// model leaks.
+  schemaName String @unique
+
+  /// Set only for a customer on their own database. Null means they live on the
+  /// shared instance, which is the default. The code treats the connection as
+  /// the boundary either way, so this is the whole of the difference.
+  databaseUrl String?
+
+  status TenantStatus @default(PENDING)
+
+  /// Where they are, which decides data residency and the default legal entity
+  /// their records are filed under.
+  region String @default("eu-west")
+
+  plan     Plan   @default(TRIAL)
+  seats    Int    @default(5)
+  /// Contact for provisioning and billing. Not a user of the tenant itself.
+  ownerEmail String
+  ownerName  String?
+
+  branding   TenantBranding?
+  events     TenantEvent[]
+  domains    TenantDomain[]
+
+  trialEndsAt   DateTime?
+  suspendedAt   DateTime?
+  suspendedWhy  String?
+  provisionedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([plan])
+}
+
+enum TenantStatus {
+  /// Signed up, nothing created yet.
+  PENDING
+  /// Schema being created and seeded.
+  PROVISIONING
+  ACTIVE
+  /// Reachable but read-only: unpaid, or wound down.
+  SUSPENDED
+  /// Scheduled for deletion; the schema still exists.
+  CLOSING
+  /// Schema dropped. The row stays, because "we deleted it and when" is the
+  /// question somebody will ask afterwards.
+  CLOSED
+}
+
+enum Plan {
+  TRIAL
+  TEAM
+  BUSINESS
+  ENTERPRISE
+}
+
+/// A custom domain a tenant serves their portal on.
+model TenantDomain {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  /// Fully qualified: portal.acme.com.
+  hostname String @unique
+  /// Proven by DNS TXT before we will serve it, so a hostname cannot be claimed
+  /// by whoever asks first.
+  verified   Boolean  @default(false)
+  verifyToken String
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+/// Per-tenant appearance. The token names match the CSS custom properties the
+/// apps already use, so applying a tenant's brand is a stylesheet of overrides
+/// rather than a fork of the components.
+model TenantBranding {
+  tenantId String @id
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  productName String  @default("GM-OS")
+  logoUrl     String?
+  logoDarkUrl String?
+
+  /// Hex. Validated for contrast before it is stored — a customer picking a
+  /// pale accent must not be able to make their own staff's buttons unreadable,
+  /// which is a defect we have already fixed once in our own theme.
+  accent      String @default("#1e6bff")
+  accentDark  String @default("#1fc8ff")
+
+  /// Their default locale; the portal still offers all of them.
+  locale String @default("en")
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Provisioning, suspension, plan changes and closure — the tenant's own
+/// history, kept in the control plane because it outlives the schema it
+/// describes.
+model TenantEvent {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  /// requested | provisioning | provisioned | seeded | suspended | resumed |
+  /// plan_changed | closing | closed | migration_applied | migration_failed
+  action String
+  detail String?
+  /// Who did it: a control-plane operator, or "system" for automated steps.
+  actorRef  String?
+  actorName String?
+
+  at DateTime @default(now())
+
+  @@index([tenantId, at])
+  @@index([at])
+}
+
+/// A schema migration applied to a tenant, recorded per tenant.
+///
+/// Migrations fan out across every schema, and an aggregate "12 of 14 succeeded"
+/// hides which two are now a version behind. A tenant silently left behind is
+/// worse than one that failed loudly, so the result is recorded per tenant.
+model TenantMigration {
+  id       String @id @default(cuid())
+  tenantId String
+
+  /// Content hash of the datamodel applied, so a re-run is detectable.
+  checksum String
+  ok       Boolean
+  error    String?
+  ranMs    Int?
+
+  at DateTime @default(now())
+
+  @@unique([tenantId, checksum])
+  @@index([at])
+}

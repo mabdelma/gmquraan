@@ -1,0 +1,46 @@
+version: 1.0
+operations: [discover, read, download, create, edit, comment, review, approve, share_internal, share_external, archive, delete_request, administer]
+roles:
+  board_member:
+    allow: [discover, read, download, comment, review, approve]
+    scope: board_and_reserved_governance
+  group_ceo:
+    allow: [discover, read, download, create, edit, comment, review, approve, share_internal, archive, delete_request]
+    scope: group_business_content
+    exclusions: [infrastructure_secrets, personal_hr_cases_without_need, legal_privilege_without_authorization]
+  entity_manager:
+    allow: [discover, read, download, create, edit, comment, review, approve, share_internal, archive, delete_request]
+    scope: assigned_entity
+  functional_director:
+    allow: [discover, read, download, create, edit, comment, review, approve, share_internal, archive, delete_request]
+    scope: assigned_function
+  department_manager:
+    allow: [discover, read, download, create, edit, comment, review, approve, share_internal]
+    scope: assigned_department_and_projects
+  employee:
+    allow: [discover, read, download, create, edit, comment]
+    scope: assigned_department_projects_tasks_and_published_knowledge
+  contractor:
+    allow: [discover, read, download, create, edit, comment]
+    scope: explicit_assignments
+    controls: [expiry_required, no_inheritance, no_external_reshare]
+  external_guest:
+    allow: [read, download, comment]
+    scope: explicitly_shared_items
+    controls: [expiry_required, password_or_authenticated, watermark_where_supported]
+  document_controller:
+    allow: [discover, read, download, create, edit, comment, review, archive, delete_request]
+    scope: document_control_and_assigned_records
+    cannot: [approve_own_controlled_document, bypass_legal_hold]
+  ai_classifier:
+    allow: [discover, read, create, comment]
+    scope: quarantine_and_metadata
+    cannot: [approve, share_external, delete_request, administer]
+  ai_orchestrator:
+    allow: [discover, read, create, edit, comment]
+    scope: configured_workflows
+    cannot: [approve, share_external, permanent_delete, grant_privilege, access_secrets]
+  infrastructure_admin:
+    allow: [administer]
+    scope: technical_platform
+    business_content_access: by_separate_authorized_role_only

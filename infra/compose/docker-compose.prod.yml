@@ -1,0 +1,192 @@
+# Production stack for the Qarrito VPS — Docker Compose joined to the shared
+# external `edge` network so the central Caddy can reverse_proxy to it (same
+# pattern as partner-one/partner-five/partner-four). Build context = repo root.
+#
+#   cd /var/www/app
+#   docker compose -f infra/compose/docker-compose.prod.yml --env-file .env -p app up -d --build
+#
+# Caddy (on `edge`) routes:
+#   example.com        → app-web:3000
+#   ai.example.com     → app-agent:3001
+#   workforce.example.com → app-workforce:3002
+#   api.example.com    → app-{auth,catalog,billing,engagement}:8080
+#
+# app-orchestrator is deliberately NOT routed: it is the background half of
+# GM-OS and has no business being reachable from the internet.
+
+name: app
+
+x-svc-env: &svc-env
+  AUTH_SECRET: ${AUTH_SECRET}
+  DATABASE_URL: postgresql://app:${POSTGRES_PASSWORD}@app-postgres:5432/app
+  # The control plane: who the tenants are. A separate database from the one
+  # holding tenant data, so a query that can read a tenant's documents cannot
+  # also read the list of every customer.
+  CONTROL_DATABASE_URL: postgresql://app:${POSTGRES_PASSWORD}@app-postgres:5432/app_control
+  NODE_ENV: production
+  APP_URL: https://example.com
+  AUTH_URL_INTERNAL: http://app-auth:8080
+  CATALOG_URL_INTERNAL: http://app-catalog:8080
+  BILLING_URL_INTERNAL: http://app-billing:8080
+  ENGAGEMENT_URL_INTERNAL: http://app-engagement:8080
+  NOTIFICATIONS_URL_INTERNAL: http://app-notifications:8080
+
+services:
+  app-postgres:
+    image: postgres:16-alpine
+    container_name: app-postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - app_pgdata:/var/lib/postgresql/data
+    networks: [app_internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app-auth:
+    container_name: app-auth
+    build: { context: ../.., dockerfile: services/auth/Dockerfile }
+    environment: { <<: *svc-env, NOTIFICATIONS_URL_INTERNAL: http://app-notifications:8080 }
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-catalog:
+    container_name: app-catalog
+    build: { context: ../.., dockerfile: services/catalog/Dockerfile }
+    environment: *svc-env
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-billing:
+    container_name: app-billing
+    build: { context: ../.., dockerfile: services/billing/Dockerfile }
+    environment:
+      <<: *svc-env
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_GROWTH_PRICE_ID: ${STRIPE_GROWTH_PRICE_ID:-}
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-engagement:
+    container_name: app-engagement
+    build: { context: ../.., dockerfile: services/engagement/Dockerfile }
+    environment: *svc-env
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-notifications:
+    container_name: app-notifications
+    build: { context: ../.., dockerfile: services/notifications/Dockerfile }
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET}
+      NODE_ENV: production
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Unskinned <noreply@example.com>}
+    networks: [app_internal]
+    restart: unless-stopped
+
+  app-web:
+    container_name: app-web
+    build: { context: ../.., dockerfile: apps/web/Dockerfile }
+    environment:
+      <<: *svc-env
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
+      UPLOAD_DIR: /data/uploads
+      # The console mints the portal handoff and needs to know where to send it.
+      PORTAL_URL: https://workforce.example.com
+      MAILCOW_API_URL: ${MAILCOW_API_URL:-}
+      MAILCOW_API_KEY: ${MAILCOW_API_KEY:-}
+      MAIL_DOMAINS: ${MAIL_DOMAINS:-}
+      MONITOR_SECRET: ${MONITOR_SECRET:-}
+      MONITOR_ALERT_TO: ${MONITOR_ALERT_TO:-founder@example.com}
+      INBOUND_SECRET: ${INBOUND_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      # Push notifications. Web Push (VAPID) is self-hosted — no Firebase.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:founder@example.com}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_CLIENT_EMAIL: ${FCM_CLIENT_EMAIL:-}
+      FCM_PRIVATE_KEY: ${FCM_PRIVATE_KEY:-}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_PRIVATE_KEY: ${APNS_PRIVATE_KEY:-}
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-com.example.app}
+      APNS_PRODUCTION: ${APNS_PRODUCTION:-false}
+    volumes:
+      - app_uploads:/data/uploads
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-agent:
+    container_name: app-agent
+    build: { context: ../.., dockerfile: apps/agent/Dockerfile }
+    environment:
+      AUTH_SECRET: ${AUTH_SECRET}
+      DATABASE_URL: postgresql://app:${POSTGRES_PASSWORD}@app-postgres:5432/app
+      NODE_ENV: production
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # The advisor's tools read the catalogue through a same-origin proxy in
+      # the agent app, which calls this over the internal network.
+      CATALOG_URL_INTERNAL: http://app-catalog:8080
+      PORTAL_URL: https://workforce.example.com
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  # ── GM-OS ─────────────────────────────────────────────────────────────────
+  app-workforce:
+    container_name: app-workforce
+    build: { context: ../.., dockerfile: apps/workforce/Dockerfile }
+    environment:
+      <<: *svc-env
+      PORTAL_URL: https://workforce.example.com
+      # Members sign in with their real mailbox password, verified against
+      # Dovecot over TLS. Nothing is stored; see packages/gmos/src/imap-auth.ts.
+      IMAP_HOST: ${IMAP_HOST:-mail.example.com}
+      # Controlled documents are stored content-addressed under this root.
+      DOCUMENT_ROOT: /data/documents
+    volumes:
+      - app_documents:/data/documents
+    networks: [edge, app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+  app-orchestrator:
+    container_name: app-orchestrator
+    build: { context: ../.., dockerfile: services/orchestrator/Dockerfile }
+    environment:
+      <<: *svc-env
+      ORCHESTRATOR_INTERVAL_MS: ${ORCHESTRATOR_INTERVAL_MS:-60000}
+    # Internal only — no edge network, so nothing outside can reach it.
+    networks: [app_internal]
+    depends_on: { app-postgres: { condition: service_healthy } }
+    restart: unless-stopped
+
+networks:
+  edge:
+    external: true
+  app_internal:
+    driver: bridge
+
+volumes:
+  app_pgdata:
+  app_uploads:
+  app_documents:

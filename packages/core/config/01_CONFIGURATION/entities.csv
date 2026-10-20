@@ -1,0 +1,5 @@
+entity_id,legal_name,country,status,base_currency,tax_id,owner
+ORG-ES,Unskinned S.L.,Spain,active,EUR,,Group CEO
+ORG-UAE,Unskinned UAE,United Arab Emirates,planned_or_active,AED,,Country Manager UAE
+ORG-CA,Unskinned Canada,Canada,planned_or_active,CAD,,Country Manager Canada
+ORG-EG,Unskinned Example Country Office,Example Country,operating_location,EGP,,Country Manager Example Country

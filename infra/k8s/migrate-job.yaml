@@ -1,0 +1,22 @@
+# One-shot schema sync job. Run after postgres is ready and whenever the schema
+# changes:  kubectl -n app delete job app-migrate --ignore-not-found && kubectl apply -f migrate-job.yaml
+# Uses the web image (it bundles the full repo incl. @app/db + prisma).
+#
+# Greenfield: uses `prisma db push` to create the schema (no migration files yet).
+# Once you commit migrations (prisma migrate dev --name init), switch the command to
+#   ["npx","prisma","migrate","deploy","--schema","/repo/packages/db/prisma/schema.prisma"]
+apiVersion: batch/v1
+kind: Job
+metadata: { name: app-migrate, namespace: app }
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: registry.example.com/web:latest
+          command: ["npx", "prisma", "migrate", "deploy", "--schema", "/repo/packages/db/prisma/schema.prisma"]
+          workingDir: /repo
+          envFrom:
+            - secretRef: { name: app-secrets }

@@ -1,0 +1,6 @@
+level,description,example_authority
+A0,Prepare only,"Draft, classify, recommend"
+A1,Routine operational approval,Low-risk internal actions
+A2,Department approval,Department records and expenditure within limit
+A3,Executive approval,"Material contracts, hiring, budgets"
+A4,Board/shareholder approval,Reserved matters

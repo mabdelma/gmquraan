@@ -1,0 +1,45 @@
+# dependencies
+**/node_modules/
+.pnp
+.pnp.*
+
+# next.js / build output
+**/.next/
+**/out/
+**/build/
+**/dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# env / secrets
+.env
+.env.*
+!.env.example
+!.env.tenant.example
+
+# misc
+.DS_Store
+*.pem
+*.tar.gz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+_xprod
+
+# accidental backups and source documents
+*.bak
+*.logobak
+*.slogbak
+# scanned licence and personal photographs — never commit these
+Unskinned/
+
+# ── Scrape reference data (gmquran.com) ──────────────────────────────────────
+# The structured extracts (JSON/CSV/Markdown) are kept as design reference.
+# The heavy mirrors are not: raw_html is 15 MB of WordPress markup and
+# scrape_out/media is 40 MB that is overwhelmingly third-party stock photos and
+# Tecnologia theme demo artwork. The association's own images are committed
+# under apps/web/public/img/ instead, which is where the app actually reads them.
+scrape_out/raw_html/
+scrape_out/media/
+scrape_out/*.log

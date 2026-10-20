@@ -1,0 +1,367 @@
+/* ── Theme ───────────────────────────────────────────────────────────────────
+   These tokens are the same set the main web app defines, so the advisor is
+   visibly the same product: light by default, dark via the OS preference, with
+   one shared brand gradient. The advisor previously ran amber-on-navy no matter
+   what the rest of the site was doing.
+
+   Keep in step with apps/web/src/app/globals.css. */
+:root {
+  --bg: #ffffff;
+  --panel: #f6f9ff;
+  --surface: #eef3ff;
+  --ink: #0b1f47;
+  --muted: #5a6b8c;
+  --accent: #1e6bff;
+  --accent2: #0b3aa8;
+  --hairline: rgba(11, 31, 71, 0.12);
+  --overlay: rgba(11, 31, 71, 0.05);
+  /* Identical in both themes — one brand identity, and dark label text on top
+     keeps its contrast either way. */
+  --grad-from: #b84dff;
+  --grad-to: #1fc8ff;
+  /* Decorative aura + icon chrome. Explicit rather than color-mix() so the
+     effect degrades gracefully on older Safari and Firefox. */
+  --aura-strong: rgba(30, 107, 255, 0.20);
+  --aura-soft: rgba(11, 58, 168, 0.10);
+  --aura-faint: rgba(30, 107, 255, 0.08);
+  --chip-bg: rgba(30, 107, 255, 0.10);
+  --chip-border: rgba(30, 107, 255, 0.24);
+  /* Soft lift on light; a deep drop on dark, where the card sits on near-black. */
+  --card-shadow: 0 18px 44px rgba(11, 31, 71, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  /* Status colours, kept in step with the web app and the portal. Darker on
+     light, brighter on dark — the same hue at one fixed value fails contrast
+     at one end or the other. */
+  --ok: #047857;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  /* Foreground for text sitting ON --accent / --danger, not on the page.
+     It has to flip with the theme: white on the light accent is 4.56, on the
+     dark accent it is 1.95. Dark ink is the reverse — 4.28 and 10.01. A single
+     fixed value fails at one end whichever one you pick. */
+  /* Accent used as TEXT, which is a different problem from accent used as a
+     surface. The brand blue clears AA on pure white at 4.56 but drops to 4.33
+     on --panel and 4.11 on --surface, and most text sits on those. This is a
+     shade darker and clears 4.5 on all three. The brand colour itself is
+     untouched: buttons, borders, the logo and the gradient still use --accent.
+     In dark mode the bright cyan already passes comfortably, so it is the same
+     value there and nothing changes. */
+  --accent-text: #155ce8;
+  --on-accent: #ffffff;
+  --on-danger: #ffffff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #070c18;
+    --panel: #0d1730;
+    --surface: #132244;
+    --ink: #eaf4ff;
+    --muted: #93b0d6;
+    --accent: #1fc8ff;
+    --accent2: #b84dff;
+    --hairline: rgba(34, 200, 255, 0.22);
+    --overlay: rgba(255, 255, 255, 0.06);
+    --aura-strong: rgba(31, 200, 255, 0.38);
+    --aura-soft: rgba(184, 77, 255, 0.16);
+    --aura-faint: rgba(31, 200, 255, 0.12);
+    --chip-bg: rgba(31, 200, 255, 0.10);
+    --chip-border: rgba(31, 200, 255, 0.24);
+    --card-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --accent-text: #1fc8ff;
+    --on-accent: #070c18;
+    --on-danger: #070c18;
+    color-scheme: dark;
+  }
+}
+
+/* An explicit choice, carried from the site in localStorage and applied
+   before paint by the init script in layout.tsx. It has to win over the
+   media query above, which is why it comes after it. */
+:root[data-theme="dark"] {
+    --bg: #070c18;
+    --panel: #0d1730;
+    --surface: #132244;
+    --ink: #eaf4ff;
+    --muted: #93b0d6;
+    --accent: #1fc8ff;
+    --accent2: #b84dff;
+    --hairline: rgba(34, 200, 255, 0.22);
+    --overlay: rgba(255, 255, 255, 0.06);
+    --aura-strong: rgba(31, 200, 255, 0.38);
+    --aura-soft: rgba(184, 77, 255, 0.16);
+    --aura-faint: rgba(31, 200, 255, 0.12);
+    --chip-bg: rgba(31, 200, 255, 0.10);
+    --chip-border: rgba(31, 200, 255, 0.24);
+    --card-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --accent-text: #1fc8ff;
+    --on-accent: #070c18;
+    --on-danger: #070c18;
+    color-scheme: dark;
+}
+
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg) !important; /* override Bootstrap Reboot so the Unskinned aura shows */
+  color: var(--ink);
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  /* 100vh on mobile Safari/Chrome counts the address bar, so the page jumps as
+     it hides. dvh tracks the visible viewport; vh stays as the fallback for
+     browsers without it. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* Stop iOS zooming the whole page when a form control is focused. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden; /* the blurred blobs must never create a sideways scroll */
+}
+
+/* Content shell — keeps everything clear of notches, rounded corners and the
+   home indicator on phones, which viewportFit:"cover" otherwise paints under.
+   Also centres the card in the viewport: left to flow it sat in the top two
+   thirds with a dead band underneath. */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* Once an answer is on screen the content is taller than the viewport, so it
+   should start at the top and scroll normally rather than stay centred. */
+.app-shell:has(.advisor-card.is-compact) { justify-content: flex-start; }
+
+/* Tint Bootstrap's amber button to the Unskinned gradient */
+.btn-warning {
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent2);
+  --bs-btn-hover-bg: var(--accent2);
+  --bs-btn-hover-border-color: var(--accent2);
+  --bs-btn-color: #080f1e;
+  --bs-btn-hover-color: #080f1e;
+  font-weight: 700;
+}
+
+/* Every control stays at least a 44px target — the minimum comfortable tap size
+   on touch screens, and what WCAG 2.5.8 asks for. */
+.btn, .form-select, .form-control { min-height: 44px; }
+
+/* iOS zooms the page in when a focused *text* field is under 16px. A <select>
+   opens a native picker instead, so it does not need the bump — forcing 16px on
+   it only made the language control visually enormous on a phone. */
+@media (max-width: 575.98px) {
+  .form-control { font-size: 16px; }
+}
+
+/* Language control: full tap target, minimal presence. It is a preference, not
+   the point of the screen. */
+.lang-select {
+  width: auto;
+  font-size: 13px;
+  padding: 8px 30px 8px 10px;
+  min-height: 40px;
+  background-color: transparent;
+  border-color: var(--hairline);
+  color: var(--muted);
+  border-radius: 999px;
+}
+.lang-select:hover { color: var(--ink); border-color: var(--accent); }
+
+/* Keyboard focus must stay visible against the dark background. */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Gradient-clipped headings fall back to solid amber where background-clip:text
+   is unsupported, instead of rendering as invisible transparent text. */
+.app-gradient-title {
+  color: var(--accent-text);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-size: clamp(20px, 5.5vw, 30px);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .app-gradient-title {
+    background-image: linear-gradient(90deg, var(--accent2), var(--accent), var(--grad-from));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.app-aura { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.app-aura .glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--aura-strong), var(--aura-soft), transparent 60%);
+  animation: app-pulse 6s ease-in-out infinite;
+}
+.app-aura .blob { position: absolute; border-radius: 9999px; filter: blur(80px); }
+.app-aura .b1 { right: 5%; top: 12%; width: 22rem; height: 22rem; background: var(--aura-strong); animation: app-float 7s ease-in-out infinite; }
+.app-aura .b2 { left: 8%; top: 22%; width: 18rem; height: 18rem; background: var(--aura-soft); animation: app-float 9s ease-in-out infinite; }
+.app-aura .b3 { right: 18%; bottom: 10%; width: 24rem; height: 24rem; background: var(--aura-faint); animation: app-float 11s ease-in-out infinite; }
+.app-aura .fade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, var(--overlay) 60%, var(--bg)); }
+
+/* Large blurs are expensive on phone GPUs and the blobs are purely decorative,
+   so shrink them and lighten the blur on small screens. */
+@media (max-width: 575.98px) {
+  .app-aura .blob { filter: blur(48px); }
+  .app-aura .b1 { width: 13rem; height: 13rem; }
+  .app-aura .b2 { width: 11rem; height: 11rem; }
+  .app-aura .b3 { width: 14rem; height: 14rem; }
+}
+
+/* ── Advisor card ────────────────────────────────────────────────────────────
+   Two shapes: the full hero while idle, and a compact bar once an answer is on
+   screen. The compact shape exists because the hero pushed the answer below the
+   fold on a phone and took the End button with it. */
+
+.advisor-head {
+  text-align: center;
+  padding: clamp(18px, 5vw, 26px) clamp(16px, 5vw, 22px) clamp(14px, 4vw, 18px);
+  /* One continuous surface reads as a single object; the hard divider and the
+     lighter header band made it look like two stacked panels. */
+  background: transparent;
+}
+.advisor-brand {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+.advisor-brand img { height: 30px; width: auto; }
+
+.advisor-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 12px;
+  border-radius: 14px;
+  color: var(--accent-text);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+}
+.advisor-icon svg { width: 26px; height: 26px; }
+.advisor-blurb {
+  color: var(--muted);
+  margin: 10px auto 0;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 34ch; /* stops "in real / time." style orphan wraps */
+}
+
+.advisor-body {
+  padding: clamp(6px, 2vw, 10px) clamp(16px, 5vw, 22px) clamp(18px, 5vw, 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 4vw, 22px);
+}
+
+/* The orb sat at 200px on a 375px screen — over half the width, and mostly
+   empty while idle. Scaled to the viewport with a lit rim so it reads as a
+   device rather than a hole. */
+.advisor-orb {
+  width: min(38vw, 146px);
+  max-width: 146px;
+  position: relative;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(140deg, var(--grad-from), var(--grad-to) 55%, var(--aura-faint));
+  box-shadow: 0 10px 34px var(--aura-faint);
+}
+@media (min-width: 992px) {
+  .advisor-orb { width: 200px; max-width: 200px; }
+}
+.advisor-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.advisor-cta { width: 100%; max-width: 320px; }
+.advisor-hint { color: #6ee7b7; font-size: 13px; text-align: center; margin: 0; }
+.advisor-error { color: #fca5a5; font-size: 13px; text-align: center; margin: 0; }
+
+/* Phones and tablets, once an answer is showing. */
+@media (max-width: 991.98px) {
+  .advisor-card.is-compact {
+    /* Stays reachable while the answer scrolls, so End is never off-screen. */
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    backdrop-filter: blur(6px);
+  }
+  /* The hero furniture is redundant once the advisor has answered. */
+  .advisor-card.is-compact .advisor-head { display: none; }
+  .advisor-card.is-compact .advisor-body {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    width: 100%;
+  }
+  .advisor-card.is-compact .advisor-orb { flex: 0 0 56px; width: 56px; max-width: 56px; }
+  .advisor-card.is-compact .advisor-controls { align-items: stretch; gap: 4px; }
+  .advisor-card.is-compact .advisor-cta { max-width: none; }
+  .advisor-card.is-compact .advisor-hint,
+  .advisor-card.is-compact .advisor-error { text-align: start; font-size: 12px; }
+
+  /* The compact bar owns the top of the screen, so the answer starts under it. */
+  .advisor-col { margin-top: 0; }
+}
+
+/* Visible only to screen readers — carries status the sighted user reads from
+   the orb and the button copy. */
+.visually-hidden-live {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes app-pulse { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.32; } }
+@keyframes app-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-aura .glow, .app-aura .blob { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Brand mark — both ship, CSS shows one. See apps/web for the same rule. */
+.brand-logo-light { display: inline-block; }
+.brand-logo-dark  { display: none; }
+@media (prefers-color-scheme: dark) {
+  .brand-logo-light { display: none; }
+  .brand-logo-dark  { display: inline-block; }
+}

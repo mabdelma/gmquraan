@@ -1,0 +1,16 @@
+actions:
+  classify_and_tag: auto
+  create_draft_from_template: auto
+  assign_routine_task: auto_with_audit
+  move_approved_record: auto_with_audit
+  external_send: human_approval
+  legal_signature: human_only
+  payroll_change: human_only
+  bank_payment: dual_human_approval
+  permanent_delete: records_owner_and_legal_approval
+  access_change_restricted: security_owner_approval
+  card_correction: human_approval
+  employee_record_change: human_approval
+  leave_decision: human_approval
+  offboard_revoke_access: auto_with_audit
+  agent_enable: security_owner_approval

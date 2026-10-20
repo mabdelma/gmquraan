@@ -1,0 +1,7 @@
+states: [draft, in_review, approved, executed, superseded, archived, deletion_pending, deleted]
+controls:
+  approved: requires_approver_and_locked_version
+  executed: requires_evidence
+  superseded: requires_replacement_id
+  deletion_pending: requires_retention_check
+  deleted: requires_two_person_authorization_and_audit_record

@@ -1,0 +1,57 @@
+# Example — append to the central Caddyfile on the VPS
+# (/var/www/gateway/infrastructure/caddy/Caddyfile) and reload Caddy.
+# Containers are reachable by name on the shared `edge` network.
+#
+# The same host must be set as APP_URL in /var/www/app/.env — the app builds
+# absolute links from that, not from the Host header.
+#
+# DNS must already resolve to 203.0.113.10 for every host below: Caddy issues the
+# certificate on first request via an HTTP-01 challenge, which fails otherwise.
+
+tenant.example {
+	encode zstd gzip
+	reverse_proxy app-web:3000
+}
+
+www.tenant.example {
+	redir https://tenant.example{uri} permanent
+}
+
+ai.tenant.example {
+	reverse_proxy app-agent:3001
+}
+
+central.tenant.example {
+	reverse_proxy app-web:3000
+}
+
+workforce.tenant.example {
+	reverse_proxy app-workforce:3002
+}
+
+api.tenant.example {
+	# Use `handle` (not handle_path) so the full /v1/<svc>/... path is preserved —
+	# the services route under their own /v1/<svc> prefix. Match exact + sub-paths.
+	@auth path /v1/auth /v1/auth/*
+	handle @auth {
+		reverse_proxy app-auth:8080
+	}
+	@catalog path /v1/catalog /v1/catalog/*
+	handle @catalog {
+		reverse_proxy app-catalog:8080
+	}
+	@billing path /v1/billing /v1/billing/*
+	handle @billing {
+		reverse_proxy app-billing:8080
+	}
+	@engagement path /v1/engagement /v1/engagement/*
+	handle @engagement {
+		reverse_proxy app-engagement:8080
+	}
+	handle {
+		respond "Not found" 404
+	}
+}
+
+# app-orchestrator and app-notifications are deliberately not routed — they are
+# internal-only, exactly as in the app stack.

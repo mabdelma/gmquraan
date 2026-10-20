@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "name": "gmquran",
+    "url": "",
+    "description": "",
+    "link": "https://gmquran.com/author/gmquran/",
+    "slug": "gmquran",
+    "avatar_urls": {
+      "24": "https://secure.gravatar.com/avatar/00320b8e5d1c0d280a0f4193e46c58a8?s=24&d=mm&r=g",
+      "48": "https://secure.gravatar.com/avatar/00320b8e5d1c0d280a0f4193e46c58a8?s=48&d=mm&r=g",
+      "96": "https://secure.gravatar.com/avatar/00320b8e5d1c0d280a0f4193e46c58a8?s=96&d=mm&r=g"
+    },
+    "meta": [],
+    "elementor_introduction": {
+      "ai-get-started-announcement": true,
+      "globals_introduction": true,
+      "e-editor-one-notice-pointer": true
+    },
+    "_links": {
+      "self": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/users/1",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://gmquran.com/wp-json/wp/v2/users"
+        }
+      ]
+    }
+  }
+]

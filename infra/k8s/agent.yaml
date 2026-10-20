@@ -1,0 +1,29 @@
+# AI Solutions Advisor (Next.js, OpenAI Realtime) — ai.example.com.
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: agent, namespace: app }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: agent } }
+  template:
+    metadata: { labels: { app: agent } }
+    spec:
+      containers:
+        - name: agent
+          image: registry.example.com/agent:latest
+          ports: [{ containerPort: 3001 }]
+          envFrom:
+            - secretRef: { name: app-secrets }
+            - configMapRef: { name: app-config }
+          readinessProbe: { httpGet: { path: /, port: 3001 }, initialDelaySeconds: 10 }
+          livenessProbe: { httpGet: { path: /, port: 3001 }, initialDelaySeconds: 20 }
+          resources:
+            requests: { cpu: "50m", memory: "192Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: agent, namespace: app }
+spec:
+  selector: { app: agent }
+  ports: [{ port: 80, targetPort: 3001 }]

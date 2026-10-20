@@ -1,0 +1,10 @@
+department_id,name,executive_owner
+GOV,Governance,CEO
+OPS,Operations,COO
+FIN,Finance and Procurement,CFO
+PEO,People and Organization,COO
+COM,Commercial,CCO
+DEL,Delivery and Projects,COO
+TEC,Products and Technology,CTO
+MKT,Marketing and Brand,CMO
+LRC,Legal Risk and Compliance,CEO

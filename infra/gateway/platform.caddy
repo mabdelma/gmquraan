@@ -1,0 +1,44 @@
+# Unskinned — append this block to the central Caddyfile
+# (/var/www/gateway/infrastructure/caddy/Caddyfile) and reload Caddy.
+# Containers are reachable by name on the shared `edge` network.
+
+example.com {
+	encode zstd gzip
+	reverse_proxy app-web:3000
+}
+
+www.example.com {
+	redir https://example.com{uri} permanent
+}
+
+ai.example.com {
+	reverse_proxy app-agent:3001
+}
+
+central.example.com {
+	reverse_proxy app-web:3000
+}
+
+api.example.com {
+	# Use `handle` (not handle_path) so the full /v1/<svc>/... path is preserved —
+	# the services route under their own /v1/<svc> prefix. Match exact + sub-paths.
+	@auth path /v1/auth /v1/auth/*
+	handle @auth {
+		reverse_proxy app-auth:8080
+	}
+	@catalog path /v1/catalog /v1/catalog/*
+	handle @catalog {
+		reverse_proxy app-catalog:8080
+	}
+	@billing path /v1/billing /v1/billing/*
+	handle @billing {
+		reverse_proxy app-billing:8080
+	}
+	@engagement path /v1/engagement /v1/engagement/*
+	handle @engagement {
+		reverse_proxy app-engagement:8080
+	}
+	handle {
+		respond "Not found" 404
+	}
+}

@@ -1,0 +1,100 @@
+version: 1.0
+# The group hierarchy. Twelve tiers, but only eight of them form the chain of
+# command — the other four are identity classes that sit beside it, not above or
+# below anything. Conflating the two is how an infrastructure administrator ends
+# up able to approve a payment.
+
+chain_of_command:
+  - id: BOARD
+    name: Shareholders and Board
+    role: BOARD
+    scope: group
+    approval_level: A4
+    note: Reserved matters. Not an operational tier.
+  - id: GROUP_CEO
+    name: Group CEO
+    role: CEO
+    scope: group
+    approval_level: A4
+  - id: EXCO
+    name: Executive Committee
+    role: [COO, CFO, CTO]
+    scope: group
+    approval_level: A3
+  - id: ENTITY_GM
+    name: Country or Entity General Manager
+    role: GM
+    scope: entity
+    approval_level: A3
+  - id: FUNCTIONAL_DIRECTOR
+    name: Functional Director
+    role: DIR
+    scope: entity
+    approval_level: A3
+  - id: DEPARTMENT_MANAGER
+    name: Department Manager
+    role: MGR
+    scope: entity
+    approval_level: A2
+  - id: PROJECT_MANAGER
+    name: Project and Product Manager
+    role: PPM
+    scope: entity
+    approval_level: A1
+  - id: EMPLOYEE
+    name: Employee
+    role: EMP
+    scope: entity
+    approval_level: A0
+
+# Beside the chain, never in it. None of these may hold a business approval
+# level above A0, and none may be given a reporting line that puts staff under
+# them.
+lateral_identities:
+  - id: CONTRACTOR
+    name: Contractors and Partners
+    role: CON
+    scope: entity
+    approval_level: A0
+    engaged_not_employed: true
+  - id: EXTERNAL
+    name: External Clients and Vendors
+    role: EXT
+    scope: external
+    approval_level: A0
+    portal_access: false
+    note: Recorded as counterparties. They do not receive portal accounts.
+  - id: AI_AGENT
+    name: AI Service Agents
+    role: AI-OPS
+    scope: group
+    approval_level: A0
+    note: >
+      A restricted service identity per agent. Agents never act as a person,
+      and no agent may hold or be delegated an approval level.
+  - id: INFRA_ADMIN
+    name: Infrastructure Administrators
+    role: INFRA
+    scope: group
+    approval_level: A0
+    note: >
+      Technical custody of servers, backups and deployments. Deliberately
+      separated from business decision-making: infrastructure power is not
+      commercial authority, and this tier approves nothing.
+
+# One structure is generated per branch. A seat with nobody in it stays vacant
+# and visible — an org chart that hides its gaps is worse than none.
+entity_template:
+  - level: ENTITY_GM
+    departments: [null]
+  - level: FUNCTIONAL_DIRECTOR
+    departments: [OPS, COM, TEC, FIN]
+  - level: DEPARTMENT_MANAGER
+    departments: [GOV, OPS, FIN, PEO, COM, DEL, TEC, MKT, LRC]
+
+rules:
+  - Every person reports to exactly one position.
+  - A position reports to a position at a higher tier, never sideways or down.
+  - Lateral identities never have reports.
+  - An entity-scoped position belongs to exactly one entity.
+  - A vacant seat is shown as vacant; work is not silently reassigned to it.
