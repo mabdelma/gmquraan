@@ -39,7 +39,7 @@ export const PLANS: Record<
     solutionLimit: 3,
     canWhiteLabel: false,
     blurb: "Explore the marketplace and request demos.",
-    perks: ["Browse all solutions", "Save & shortlist solutions", "Request up to 3 demos", "AI Solutions Advisor"],
+    perks: ["Browse all solutions", "Save & shortlist solutions", "Request up to 3 demos"],
   },
   GROWTH: {
     label: "Growth",

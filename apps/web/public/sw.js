@@ -1,5 +1,5 @@
 /* Unskinned — service worker (installable PWA, offline shell, web push). */
-const CACHE = "app-v3";
+const CACHE = "app-v4";
 const PRECACHE = ["/offline.html", "/logo.svg", "/icon-192.png"];
 
 self.addEventListener("install", (event) => {

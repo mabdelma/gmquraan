@@ -25,7 +25,7 @@ const en: AppMessages = {
   dash: { welcome: "Welcome", browse: "Browse marketplace", partnerPortal: "Partner portal", saved: "Saved solutions", savedEmpty: "Nothing saved yet.", demos: "Demo requests", demosEmpty: "No demo requests yet." },
   partner: { title: "Partner portal", leadsCrm: "Leads / CRM", newSolution: "New solution", published: "Published solutions", leads: "Leads", demoRequests: "Demo requests", yourSolutions: "Your solutions", empty: "You haven't published any solutions yet.", emptyCta: "Create your first", draft: "Draft", pub: "Published" },
   partnerNew: { title: "Publish a solution", subtitle: "List a ready-to-deploy solution on the Unskinned marketplace.", titleField: "Title", summary: "Short summary (one line)", description: "Full description", price: "Price (0 = contact)", vendor: "Vendor / brand name", tags: "Tags (comma separated)", techStack: "Tech stack (comma separated)", whiteLabel: "Available as white-label", publish: "Publish solution", publishing: "Publishing…" },
-  partnerLeads: { title: "Leads & CRM pipeline", subtitle: "leads from demo requests, contact forms and the advisor.", empty: "No leads yet.", lead: "Lead", solution: "Solution", message: "Message", status: "Status" },
+  partnerLeads: { title: "Leads & CRM pipeline", subtitle: "leads from demo requests and contact forms.", empty: "No leads yet.", lead: "Lead", solution: "Solution", message: "Message", status: "Status" },
   admin: { title: "Central admin", reviewModeration: "Review moderation", users: "Users", partners: "Partners", solutions: "Solutions", leads: "Leads", createCoupon: "Create a coupon", recentLeads: "Recent leads" }
 };
 

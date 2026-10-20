@@ -3,9 +3,9 @@ import { Cairo, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { GlobalBackground } from "@/components/GlobalBackground";
 import { COMPANY, OFFICES, REGISTRATION } from "@/lib/content";
+import { TAGLINE, POSITIONING } from "@/lib/brand-content";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { AdvisorWidget } from "@/components/AdvisorWidget";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { PWARegister } from "@/components/PWARegister";
 import { NativeBridge } from "@/components/NativeBridge";
@@ -58,20 +58,29 @@ const body = Cairo({
 // The central console is its own shell — hide the public marketing top bar + footer.
 const APP_PREFIXES = ["/central"];
 
+// The site is Arabic-only, so the document title, description and social card
+// are Arabic too — the browser tab read "Association for the Preservation…" in
+// English while every visible word on the page was Arabic. Static metadata is
+// evaluated without a request, but there is only one locale now, so the Arabic
+// strings can be used directly.
 export const metadata: Metadata = {
   title: {
-    default: `${COMPANY.name} — ${COMPANY.tagline}`,
-    template: `%s · ${COMPANY.name}`
+    // The browser tab shows the association's name alone — short, and Arabic.
+    // The tagline rode along here and made the tab overflow; it stays on the
+    // social card (openGraph) below, where a longer title is fine.
+    default: COMPANY.nameAr,
+    template: `%s · ${COMPANY.nameAr}`
   },
-  description: COMPANY.positioning,
+  description: POSITIONING.ar,
   metadataBase: new URL(`https://www.${COMPANY.domain}`),
   openGraph: {
-    title: `${COMPANY.name} — ${COMPANY.tagline}`,
-    description: COMPANY.positioning,
-    type: "website"
+    title: `${COMPANY.nameAr} — ${TAGLINE.ar}`,
+    description: POSITIONING.ar,
+    type: "website",
+    locale: "ar_EG"
   },
-  applicationName: COMPANY.name,
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: COMPANY.shortName },
+  applicationName: COMPANY.nameAr,
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: COMPANY.nameAr },
   icons: {
     // Light-only site: one favicon set, no prefers-color-scheme variants.
     icon: [
@@ -143,7 +152,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {!isApp && <Nav />}
         <main id="main" className="flex-1">{children}</main>
         {!isApp && <Footer />}
-        <AdvisorWidget locale={locale} />
         {!isApp && <WhatsAppButton locale={locale} number={contact.whatsapp} />}
         <CookieConsent locale={locale} />
         <PWARegister />

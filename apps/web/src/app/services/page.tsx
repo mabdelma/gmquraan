@@ -44,10 +44,10 @@ export default async function ServicesPage() {
     svc.items.map((item) => (SERVICE_ITEMS[item] ? pick(SERVICE_ITEMS[item], locale) : item))
   );
   // The five stages are hand-translated in messages.ts, index-aligned with
-  // OPERATING_MODEL (a test pins the lengths). Reading them here rather than
-  // machine-translating the English means these render in every locale with
-  // no API key involved — translateBatch returns the source unchanged when
-  // OPENAI_API_KEY is unset, which is how this page used to show English.
+  // OPERATING_MODEL (a test pins the lengths). These are hand-written in the
+  // locale dictionary rather than machine-translated — there is no translation
+  // backend any more (the AI was removed), so hand-written copy is the only
+  // copy there is.
   const stages = getMessages(locale).operating.items;
 
   return (
