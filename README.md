@@ -1,162 +1,128 @@
-# Unskinned
+# gmquraan
 
-A brand-neutral monorepo template: a multi-tenant Next.js platform with Fastify
-microservices, a shared Postgres schema via Prisma, a realtime AI advisor, and a
-Caddy + Docker deployment. Built with
-[npm workspaces](https://docs.npmjs.com/cli/v11/using-npm/workspaces).
+The website of **جمعية المحافظة على القرآن الكريم — التناغة الشرقية، ساحل سليم**
+(the Association for the Preservation of the Holy Qur'an, Sahel Selim, Assiut,
+Egypt), rebuilt on the Unskinned platform.
 
-**There is no brand in this repository.** Every company name, logo, photograph,
-address, phone number, registration number and domain is a neutral placeholder.
-Rebranding is an edit to two content files and a set of image assets — see
-[§9](#9-rebranding) — not a hunt through the codebase.
+A community association registered as **no. 224 of 1977**, working in six
+fields: Qur'an memorisation, orphan sponsorship, a nursery, a workshop,
+service projects and lending.
 
 ---
 
-## 1. Architecture at a glance
+## What this replaces
 
-One typed monorepo containing three **Next.js apps**, a set of **Fastify
-microservices** behind them, a shared **PostgreSQL** database via Prisma, and a
-**Caddy + Docker** deployment that serves several hosts from one codebase via
-**host-based multi-tenancy**.
+The association's live site at [gmquran.com](https://gmquran.com/) runs
+WordPress with the commercial *Tecnologia* IT-consultancy theme — and the demo
+content was never removed. Of 109 public URLs, **three** carry the
+association's own words; the other 106 are the theme's fictional IT company:
+team members, "industries", case studies, and 23 English blog posts about cloud
+migration and cybersecurity. The browser tab still reads "Tecnologia" and the
+footer still sells IT services.
 
-```
-Browser ──TLS──▶ Caddy (host-based routing)
-                   ├─ example.com            → app-web       (marketing + marketplace + dashboards)
-                   ├─ central.example.com    → app-web       (/central admin console)
-                   ├─ passive.example.com    → app-web       (/hub partnership hub)
-                   ├─ workforce.example.com  → app-workforce (HR / org / finance)
-                   └─ ai.example.com         → app-agent     (realtime AI advisor)
+This repository is the rebuild. See [docs/SCRAPE.md](docs/SCRAPE.md) for the
+full survey of the old site, including two security findings worth acting on.
 
-app-web (Next.js BFF) ──Prisma──▶ Postgres
-        └──signed service JWT──▶ Fastify services (auth · catalog · billing · engagement · notifications · orchestrator)
-```
+## Branding
 
-## 2. Repository structure
+Everything visual derives from the association's own emblem — the teal wreath,
+the gold hands, the open book, the registration ribbon.
 
-```
-.
-├─ packages/
-│  ├─ shared/  → @app/shared   # JWT (HS256), logger, HTTP helpers, cross-service DTOs
-│  ├─ db/      → @app/db       # Prisma schema + client + migrations (shared by apps + services)
-│  └─ core/    → @app/core     # domain core: org, tenancy, permissions, ledger, CRM, HR, workflow
-├─ services/                   # Fastify microservices (one process each, /health + /ready)
-│  ├─ auth/          # credentials, OAuth, JWT issuance, email-verify/reset tokens
-│  ├─ catalog/       # listing / search
-│  ├─ billing/       # payments, checkout, webhooks, coupons
-│  ├─ engagement/    # saved items, demo requests, leads/CRM, alert cron
-│  ├─ notifications/ # transactional email over SMTP, localized templates
-│  └─ orchestrator/  # internal job coordination (not publicly routed)
-├─ apps/
-│  ├─ web/           # Next.js 15 App Router — public site, marketplace, dashboards, /central (UI + BFF)
-│  ├─ workforce/     # Next.js — HR, org chart, approvals, assets, finance
-│  └─ agent/         # Next.js — realtime AI voice advisor
-├─ mobile/           # Capacitor wrapper (iOS/Android) loading the hosted PWA
-├─ integrations/     # drop-in reseller client (TS + PHP) for sibling products
-├─ infra/            # compose/, gateway/ (Caddy), monitor/, k8s/
-└─ scripts/ , docs/ , ARCHITECTURE.md , DEPLOY.md
-```
+| Token | Value | Role |
+|---|---|---|
+| ink teal | `#0C3433` | body text, dark grounds |
+| deep teal | `#175F5E` | accent — 7.41:1 on white, so it carries text |
+| teal | `#4DACAC` | accent on dark grounds |
+| mint | `#B9DECF` | accent text on dark |
+| gold | `#D7B75A` | surface only — 1.94:1 on white, never a word |
+| paper | `#F8F7F3` | light panel |
 
-## 3. Tech stack
+**The live site's blue (`#010ED0`) is deliberately not carried over.** It came
+with the stock theme, was never the association's colour, and clashed with the
+association's own teal-and-gold logo.
 
-- **Language/build:** TypeScript everywhere, npm workspaces, shared `tsconfig.base.json`.
-- **Web/UI:** Next.js 15 App Router, React Server Components (`force-dynamic`), Tailwind;
-  the AI app uses Bootstrap 5 (dark).
-- **Services:** Fastify, JWT (HS256) verified via `@app/shared`.
-- **Data:** PostgreSQL + Prisma (`@app/db`).
-- **AI:** OpenAI Realtime (voice, WebRTC) + Chat Completions (text advisor + translation).
-- **Infra:** Docker Compose, Caddy (shared reverse proxy, host-based routing), VPS or k8s.
+Every pairing above is WCAG-checked, and the reasoning is written into
+[`globals.css`](apps/web/src/app/globals.css) rather than left implicit. One
+inherited constraint is gone: the template's accent was a metallic gold that
+could not legally carry text, so it needed a separate deepened variant. The
+deep teal clears AA on both light grounds, so `--accent` and `--accent-text`
+are now one colour.
 
-## 4. The web app (`apps/web`) — UI + BFF
+### Assets
 
-Plays two roles: it renders the UI **and** is the backend-for-frontend.
-
-- **Rendering:** mostly React Server Components that query Prisma directly and stream HTML;
-  `"use client"` only for interactive bits (forms, AI widget, language switcher, dashboard shell).
-- **Host-based multi-tenancy (`middleware.ts`):** one codebase serves several surfaces —
-  `central.` → `/central`, `passive.` → `/hub`, apex → the public site. The middleware also does
-  first-visit **locale detection** and forwards `x-pathname` so the layout hides marketing chrome
-  on app routes.
-- **Route handlers (`/api/*`):** the BFF — advisor, contact, leads, central admin CRUD, the public
-  reseller API (`/api/v1/reseller/*`), `devices/register`, `version`, inbound email, monitor alert.
-- **Two session systems:** a client session (`app_session` JWT cookie, `getSessionUser()`) and an
-  isolated **central-admin** session (host-only `app_admin` cookie on the `central.` subdomain,
-  `getCentralAdmin()`).
-
-## 5. Data model (Prisma / Postgres)
-
-One Postgres, one schema. Key models: `User` (CLIENT/PARTNER/RESELLER/ADMIN/SUPER_ADMIN),
-`Solution` (catalog item — category, license, price in cents, `partnerSharePercent`), `Review`,
-`Lead`, `Agreement`, `Conversation`/`Message`, `PaymentTransaction`, `Coupon`, `Payout`,
-`Partner` + `PartnerSale`, `ProductKey` + `ResellerSale`, `Setting` (key-value config),
-`Translation` (LLM-translation cache), `DeviceToken` (mobile push), `PageView`, `AuditLog`,
-`AgentUsage`, `AuthToken`.
-
-## 6. Key subsystems
-
-- **i18n:** static UI via typed `Record<Locale, …>` dictionaries (adding a locale is
-  compile-time enforced) + **dynamic content** translated on-demand and **cached in the
-  `Translation` table** (`lib/translate.ts`). One apex-scoped `app_locale` cookie shares the
-  choice across all subdomains; RTL via `<html dir>`.
-- **AI (three chains):** (1) **voice agent** — WebRTC to OpenAI Realtime, ephemeral token minted
-  server-side, instructions built from the live catalog, function-calls rendered as visual tool
-  cards; (2) **text advisor** (`/api/advisor`) — RAG (retrieve → ground) + multi-turn history +
-  reply-in-language; (3) **translation** — cached batch translator.
-- **Cross-product reseller:** the platform issues `ProductKey`s; sibling products call
-  `/api/v1/reseller/{validate,sales,codes}` to apply codes and report sales (idempotent).
-  Reusable client in `integrations/`.
-- **Mobile (PWA + Capacitor):** installable PWA (manifest, network-first service worker, offline
-  page, icons) wrapped by Capacitor (`mobile/`) loading the hosted site via `server.url`, with
-  native push (`public/native-bridge.js` → `/api/v1/devices/register`). **Auto-update**:
-  `/api/version` (Next build id) polled by the client → reloads on every deploy.
-- **Ops:** cron health monitor with email alerts, first-party `PageView` analytics, `AuditLog`.
-
-## 7. Local development
+Both logo variants come from the association itself — it published the emblem
+on cream and on black, so each theme gets artwork drawn for it rather than one
+file recoloured.
 
 ```bash
-npm install                               # installs all workspaces (packages, services, apps)
-cp .env.example .env                      # then set AUTH_SECRET, DATABASE_URL, OPENAI_API_KEY, etc.
-
-npm run dev:infra                         # Postgres (docker compose)
-npm --workspace @app/db run migrate       # apply migrations
-npm --workspace @app/db run seed          # demo catalog + content
-npm --workspace @app/db run generate      # generate the Prisma client
-
-npm run dev:web                           # the web app    → http://localhost:3000
-npm run dev:agent                         # the AI advisor → http://localhost:3001
-npm run services:dev                      # the Fastify microservices (docker compose)
+python scripts/build-brand-assets.py   # logos + full icon set, backgrounds knocked out
+python scripts/build-service-tiles.py  # the six service tiles
 ```
 
-The web app reads the DB directly for its own pages/actions and calls the microservices over the
-internal network via the `*_URL_INTERNAL` env vars (e.g. email through `notifications`). Marketing
-pages render without any service running. Without `OPENAI_API_KEY`, the AI features fall back to
-grounded responses and translations pass through in English.
+## Two deliberate omissions
 
-## 8. Deployment
+Both exist to avoid publishing a claim nobody actually made.
 
-Docker Compose (project `app`, `infra/compose/docker-compose.prod.yml`) on two networks: `edge`
-(public, shared with neighbouring products + Caddy) and `app_internal` (private). A shared
-**Caddy** terminates TLS and routes by host — see `infra/gateway/` for the vhost templates
-(`platform.caddy` for the primary stack, `tenant.caddy` for a second tenant on the same box).
-Deploy = tar the repo → scp to the VPS → `docker compose build && up -d --force-recreate`
-→ `prisma migrate deploy`. See [DEPLOY.md](DEPLOY.md).
+**No named officers.** The live contact page lists eight personal names in bare
+`<div>`s, under no heading, with no role against any of them. They are probably
+the board — but "probably" is an inference about real private individuals, so
+`LEADERSHIP` carries the association's own contact identity instead of handing
+those people invented titles. Replace it once the association confirms who
+holds which office.
 
-## 9. Rebranding
+**No photographs of the work.** The media library contains no documentary
+photography of the association — only generic stock cards and a stock
+illustration. Captioning one of those "our nursery" would present an image as
+evidence of something it does not show, so the six service tiles are openly
+abstract geometry in the brand palette. Drop real photographs into
+`apps/web/public/img/services/` under the same names and the cards pick them up
+with no code change.
 
-Everything brand-bearing is deliberately confined to a short list:
+The same rule governs identifiers: registration no. 224 of 1977 is published
+because the association letters it onto its own emblem. The tax number, licence
+number and any professional-body registration stay `null`, and the pages render
+an explicit "not published" state rather than a plausible-looking number.
 
-| What | Where |
+## Rebranding surface
+
+Two files and a set of images. Nothing else needs touching.
+
+| File | Carries |
 |---|---|
-| Company name, contacts, registration, offices, leadership | `apps/web/src/lib/content.ts` |
-| Headline copy, values, practice areas, page metadata | `apps/web/src/lib/brand-content.ts` |
-| Portfolio imagery and captions | `apps/web/src/lib/gallery.ts` + `apps/web/public/img/` |
-| Print roster for business cards | `scripts/card-roster.json` |
-| Logos, favicons, app icons, splash screens | `apps/*/public/`, `mobile/resources/` |
-| Public hostnames and TLS | `infra/gateway/*.caddy` |
-| Container names, volumes, networks | `infra/compose/*.yml` (prefix `app-` / `app_`) |
-| Package scope | `@app/*` in each workspace `package.json` |
+| [`apps/web/src/lib/content.ts`](apps/web/src/lib/content.ts) | identity, registration, office, phones, services |
+| [`apps/web/src/lib/brand-content.ts`](apps/web/src/lib/brand-content.ts) | headline copy, values, service areas, page metadata |
+| [`apps/web/src/lib/messages.ts`](apps/web/src/lib/messages.ts) | per-locale dictionary, index-aligned with the above |
+| [`apps/web/src/app/globals.css`](apps/web/src/app/globals.css) | theme tokens |
 
-Identifiers a real deployment must be able to prove — legal entity name, commercial register
-number, tax number, licence number — are `null` in `content.ts`. The pages render an explicit
-"not on file" state for a `null` rather than inventing a plausible-looking value, so an unfilled
-field stays visible instead of silently shipping as fact. Fill each one in only once you hold
-the documentary evidence.
+All copy exists in five locales (ar, en, es, pt, fr), with **Arabic as the
+default** — it is the language the association actually works in. Every locale
+field is required, so a half-translated string is a build error rather than an
+English sentence shown to a French reader.
+
+## Development
+
+```bash
+npm install
+npx prisma generate --schema packages/db/prisma/schema.prisma
+
+npm run dev:web     # http://localhost:3000
+npm run test:web    # 136 tests
+npm run build:web
+```
+
+The marketing pages render without any service or database running.
+
+The platform underneath (Fastify microservices, Prisma/Postgres, the realtime
+AI advisor, the workforce portal, Caddy/Docker deployment) is documented in
+[ARCHITECTURE.md](ARCHITECTURE.md) and [DEPLOY.md](DEPLOY.md). Much of it — the
+billing, reseller and workforce subsystems in particular — is far more than a
+six-field community association needs; it is inherited from the template and
+left intact rather than torn out.
+
+## Tests
+
+136 passing across 12 files. The guard tests inherited from the template were
+re-pointed at the association's facts rather than relaxed — they still pin
+which identifiers may appear, that every phone number is stored in
+international form, that the WhatsApp line is the mobile (the two landlines
+cannot carry it), and that no string ships in fewer than five locales.
