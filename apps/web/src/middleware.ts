@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { LOCALES, LOCALE_COOKIE, DEFAULT_LOCALE } from "@/lib/i18n";
 
 /**
- * On a visitor's first request (no locale cookie yet), detect the best language
- * from Accept-Language, set the cookie, and pass it forward as a request header
- * (x-app-locale) so the very first render is already localized.
+ * Host-based routing for the app subdomains, plus forwarding the request path so
+ * the layout can hide marketing chrome on app routes.
+ *
+ * There is no locale detection here any more: the site is Arabic-only and the
+ * rendered locale is pinned in i18n.server.ts, so sniffing Accept-Language and
+ * setting an `app_locale` cookie would only set a value nothing reads.
  */
 export function middleware(req: NextRequest) {
   // Central admin host → the console (the upstream platform-style host-based central).
@@ -25,27 +27,7 @@ export function middleware(req: NextRequest) {
   // Always forward the current path so the layout can hide marketing chrome on app routes.
   const headers = new Headers(req.headers);
   headers.set("x-pathname", req.nextUrl.pathname);
-
-  if (req.cookies.has(LOCALE_COOKIE)) return NextResponse.next({ request: { headers } });
-
-  const accept = (req.headers.get("accept-language") || "").toLowerCase();
-  let pick: string = DEFAULT_LOCALE;
-  for (const part of accept.split(",")) {
-    const base = part.split(";")[0].trim().split("-")[0];
-    if ((LOCALES as readonly string[]).includes(base)) {
-      pick = base;
-      break;
-    }
-  }
-
-  headers.set("x-app-locale", pick);
-  const res = NextResponse.next({ request: { headers } });
-  res.cookies.set(LOCALE_COOKIE, pick, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-  });
-  return res;
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {
