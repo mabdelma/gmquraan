@@ -101,12 +101,14 @@ describe("the media gallery", () => {
     }
   });
 
-  it("publishes only visualisations, not photographs of built third-party work", () => {
-    // project-08 is a photograph of a branded, built facility and is held back
-    // in gallery.ts until the office confirms authorship. If a photograph is
-    // added later it must be labelled as one, not slipped in as a render.
-    expect(ALL_MEDIA.every((m) => m.kind === "visualisation")).toBe(true);
-    expect(ALL_MEDIA.some((m) => m.src.includes("project-08"))).toBe(false);
+  it("publishes only the association's own graphic material, not photographs of its activities", () => {
+    // Everything in the gallery is graphic material the association itself
+    // published — cards, an illustration, a banner. No photograph of its
+    // circles, nursery or workshop exists in what it published, so none is
+    // shown: a `kind: "photograph"` slipped in here would be claiming a
+    // documentary image the association never supplied.
+    expect(ALL_MEDIA.every((m) => m.kind === "graphic")).toBe(true);
+    expect(ALL_MEDIA.some((m) => m.kind === "photograph")).toBe(false);
   });
 });
 

@@ -108,16 +108,19 @@ export const VALUES: { key: string; title: Bi; body: Bi }[] = [
  * Slugs are shared with `SERVICES` in content.ts, so a service cannot appear on
  * /services with a card here and no entry there.
  *
- * `image` points at a drawn tile, not a photograph — see
- * scripts/build-service-tiles.py for why. When the association supplies real
- * photographs of its circles, nursery and workshop, replacing the file at the
- * same path is the whole change.
+ * `image` points at a real image recovered from the association's own site,
+ * matched to each service: the Qur'an-and-beads card, the family-in-a-hand
+ * banner and the mother-and-child illustration map directly; the workshop,
+ * service-projects and lending tiles crop the association's own concept-card
+ * icons (skills, growth, a target) to drop their baked-in labels. When the
+ * association supplies real photographs of its circles, nursery and workshop,
+ * replacing the file at the same path is the whole change.
  */
 export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: Bi }[] = [
   {
     slug: "quran-memorisation",
     title: { ar: "تحفيظ القرآن الكريم", en: "Qur'an Memorisation", es: "Memorización del Corán", pt: "Memorização do Alcorão", fr: "Mémorisation du Coran" },
-    image: "/img/services/quran-memorisation.png",
+    image: "/img/services/quran-memorisation.jpg",
     detail: {
       ar: "حلقات لتحفيظ القرآن الكريم وتعليم التجويد — وهي العمل الذي قامت عليه الجمعية منذ إشهارها سنة ١٩٧٧.",
       en: "Circles for memorising the Qur'an and learning recitation — the work the association was founded on when it was registered in 1977.", es: "Círculos de memorización del Corán y aprendizaje de la recitación: la labor sobre la que se fundó la asociación al inscribirse en 1977.", pt: "Círculos de memorização do Alcorão e aprendizagem da recitação — o trabalho que deu origem à associação quando foi registada em 1977.", fr: "Des cercles de mémorisation du Coran et d'apprentissage de la récitation — l'activité fondatrice de l'association lors de son enregistrement en 1977."
@@ -126,7 +129,7 @@ export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: B
   {
     slug: "orphan-sponsorship",
     title: { ar: "كفالة الأيتام", en: "Orphan Sponsorship", es: "Apadrinamiento de huérfanos", pt: "Apadrinhamento de órfãos", fr: "Parrainage d'orphelins" },
-    image: "/img/services/orphan-sponsorship.png",
+    image: "/img/services/orphan-sponsorship.jpg",
     detail: {
       ar: "كفالة الأيتام ومتابعة أحوالهم وأسرهم، بما يحفظ كرامتهم ولا يجعل العون منّة.",
       en: "Sponsoring orphans and staying with their families, in a way that protects their dignity rather than making help a favour.", es: "Apadrinar a los huérfanos y acompañar a sus familias, de modo que se proteja su dignidad y la ayuda no sea un favor.", pt: "Apadrinhar órfãos e acompanhar as suas famílias, de modo a proteger a sua dignidade e não fazer da ajuda um favor.", fr: "Parrainer les orphelins et accompagner leurs familles, d'une manière qui protège leur dignité au lieu de faire de l'aide une faveur."
@@ -135,7 +138,7 @@ export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: B
   {
     slug: "nursery",
     title: { ar: "الحضانة", en: "Nursery", es: "Guardería", pt: "Creche", fr: "Crèche" },
-    image: "/img/services/nursery.png",
+    image: "/img/services/nursery.jpg",
     detail: {
       ar: "حضانة لأطفال المجتمع المحلي، ضمن هدف الجمعية في الارتقاء بمستوى الأم والطفل.",
       en: "A nursery for the children of the local community, under the association's aim of improving the lot of mothers and children.", es: "Una guardería para los niños de la comunidad local, dentro del objetivo de la asociación de mejorar la situación de madres e hijos.", pt: "Uma creche para as crianças da comunidade local, no âmbito do objetivo da associação de melhorar a situação de mães e crianças.", fr: "Une crèche pour les enfants de la communauté locale, au titre de l'objectif de l'association d'améliorer la situation des mères et des enfants."
@@ -144,7 +147,7 @@ export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: B
   {
     slug: "workshop",
     title: { ar: "المشغل", en: "The Workshop", es: "El taller", pt: "A oficina", fr: "L'atelier" },
-    image: "/img/services/workshop.png",
+    image: "/img/services/workshop.jpg",
     detail: {
       ar: "مشغل يتيح العمل والتدريب، وبخاصة للمرأة — ترجمةً لقيمة المشاركة الفعالة التي تنص عليها الجمعية.",
       en: "A workshop offering work and training, for women in particular — the association's stated value of active participation put into practice.", es: "Un taller que ofrece trabajo y formación, en particular a las mujeres: el valor de participación activa de la asociación llevado a la práctica.", pt: "Uma oficina que oferece trabalho e formação, em especial às mulheres — o valor de participação ativa da associação posto em prática.", fr: "Un atelier offrant travail et formation, en particulier aux femmes — la valeur de participation active de l'association mise en pratique."
@@ -153,7 +156,7 @@ export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: B
   {
     slug: "service-projects",
     title: { ar: "المشروعات الخدمية", en: "Service Projects", es: "Proyectos de servicio", pt: "Projetos de serviço", fr: "Projets de service" },
-    image: "/img/services/service-projects.png",
+    image: "/img/services/service-projects.jpg",
     detail: {
       ar: "مشروعات خدمية للمجتمع المحلي، منها التوعية بمخاطر الأمراض، في إطار النهوض بالمجتمع.",
       en: "Service projects for the local community, disease-awareness work among them, as part of lifting the community.", es: "Proyectos de servicio para la comunidad local, entre ellos la concienciación sobre enfermedades, como parte de impulsar la comunidad.", pt: "Projetos de serviço para a comunidade local, entre eles a sensibilização para as doenças, como parte do esforço de impulsionar a comunidade.", fr: "Des projets de service pour la communauté locale, dont la sensibilisation aux maladies, dans le cadre du progrès de la communauté."
@@ -162,7 +165,7 @@ export const PRACTICE_AREAS: { slug: string; title: Bi; image: string; detail: B
   {
     slug: "microlending",
     title: { ar: "الإقراض", en: "Lending", es: "Préstamos", pt: "Crédito", fr: "Prêts" },
-    image: "/img/services/microlending.png",
+    image: "/img/services/microlending.jpg",
     detail: {
       ar: "إقراض يعين الأسر على بدء عمل تعيش منه، بدلاً من المعونة التي تنتهي بانتهائها.",
       en: "Lending that helps a household start something it can live from, rather than aid that ends when the aid ends.", es: "Préstamos que ayudan a una familia a iniciar algo de lo que vivir, en lugar de una ayuda que acaba cuando acaba la ayuda.", pt: "Crédito que ajuda uma família a iniciar algo de que possa viver, em vez de uma ajuda que termina quando a ajuda acaba.", fr: "Des prêts qui aident un foyer à lancer une activité dont il puisse vivre, plutôt qu'une aide qui cesse quand l'aide cesse."

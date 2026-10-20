@@ -15,10 +15,10 @@ const UI = {
   eyebrow: { ar: "المركز الإعلامي", en: "Media Centre", es: "Sala de prensa", pt: "Centro de imprensa", fr: "Espace presse" } as Bi,
   title: { ar: "أعمالنا وأخبارنا", en: "Our work and our news", es: "Nuestro trabajo y nuestras noticias", pt: "O nosso trabalho e as nossas notícias", fr: "Nos travaux et nos actualités" } as Bi,
   lede: {
-    ar: "أعمال الإظهار المعماري والهندسي التي ينتجها المكتب، ثم ما يُنشر من أخبار وإعلانات.",
-    en: "The architectural and engineering visualisation the office produces, followed by any published news and announcements.", es: "La visualización arquitectónica y de ingeniería que produce la oficina, seguida de las noticias y anuncios publicados.", pt: "A visualização arquitetónica e de engenharia que o gabinete produz, seguida das notícias e anúncios publicados.", fr: "La visualisation architecturale et technique produite par le bureau, suivie des actualités et annonces publiées.",
+    ar: "الصور والمواد التي اختارتها الجمعية لتعرّف بنفسها وبقيمها، ثم ما يُنشر من أخبار وإعلانات.",
+    en: "The images and material the association chose to present itself and its values, followed by any published news and announcements.", es: "Las imágenes y el material que la asociación eligió para presentarse y mostrar sus valores, seguidos de las noticias y anuncios publicados.", pt: "As imagens e o material que a associação escolheu para se apresentar e aos seus valores, seguidos das notícias e anúncios publicados.", fr: "Les images et le matériel que l'association a choisis pour se présenter et présenter ses valeurs, suivis des actualités et annonces publiées.",
   } as Bi,
-  galleryTitle: { ar: "معرض الأعمال", en: "Visual portfolio", es: "Portafolio visual", pt: "Portefólio visual", fr: "Portfolio visuel" } as Bi,
+  galleryTitle: { ar: "معرض الجمعية", en: "The association's gallery", es: "Galería de la asociación", pt: "Galeria da associação", fr: "Galerie de l'association" } as Bi,
   stills: { ar: "لقطة", en: "stills", es: "imágenes", pt: "imagens", fr: "images" } as Bi,
   clipsLabel: { ar: "مقطع", en: "clips", es: "vídeos", pt: "vídeos", fr: "séquences" } as Bi,
   clipsTitle: { ar: "جولات متحركة", en: "Animated walkthroughs", es: "Recorridos animados", pt: "Percursos animados", fr: "Visites animées" } as Bi,
@@ -29,8 +29,8 @@ const UI = {
    * know which of them exist.
    */
   disclosure: {
-    ar: "هذه أعمال إظهار ثلاثي الأبعاد ينتجها المكتب لتوضيح التصميم. لم تُرفق بها أسماء عملاء أو مشاريع أو مواقع، ولن يُنشر أيٌّ منها دون مستند يثبته.",
-    en: "These are 3D visualisations the office produces to communicate a design. No client, project name or location is attached to them, and none will be published without a document behind it.", es: "Se trata de visualizaciones 3D que la oficina produce para comunicar un diseño. No llevan asociado ningún cliente, nombre de proyecto ni ubicación, y ninguno se publicará sin un documento que lo respalde.", pt: "São visualizações 3D que o gabinete produz para comunicar um projeto. Não lhes está associado qualquer cliente, nome de obra ou localização, e nenhum será publicado sem um documento que o suporte.", fr: "Il s'agit de visualisations 3D que le bureau produit pour communiquer un projet. Aucun client, nom d'opération ni localisation ne leur est attaché, et aucun ne sera publié sans document à l'appui.",
+    ar: "هذه مواد رسومية اختارتها الجمعية لتقديم هويتها وقيمها، وليست صورًا فوتوغرافية لأنشطتها. حين تتوفّر صور حقيقية للحلقات والحضانة والمشغل ستحلّ محلّها.",
+    en: "These are graphic materials the association chose to present its identity and values, not photographs of its activities. Real photographs of the circles, the nursery and the workshop will replace them when they are available.", es: "Se trata de materiales gráficos que la asociación eligió para presentar su identidad y valores, no de fotografías de sus actividades. Cuando haya fotografías reales de los círculos, la guardería y el taller, las sustituirán.", pt: "São materiais gráficos que a associação escolheu para apresentar a sua identidade e valores, não fotografias das suas atividades. Quando existirem fotografias reais dos círculos, da creche e da oficina, substituí-las-ão.", fr: "Il s'agit de supports graphiques que l'association a choisis pour présenter son identité et ses valeurs, non de photographies de ses activités. De vraies photographies des cercles, de la crèche et de l'atelier les remplaceront lorsqu'elles seront disponibles.",
   } as Bi,
   newsTitle: { ar: "الأخبار والإعلانات", en: "News and announcements", es: "Noticias y anuncios", pt: "Notícias e anúncios", fr: "Actualités et annonces" } as Bi,
   read: { ar: "اقرأ المزيد", en: "Read more", es: "Leer más", pt: "Ler mais", fr: "Lire la suite" } as Bi,
@@ -82,7 +82,8 @@ export default async function MediaPage() {
         <div className="flex flex-wrap items-baseline gap-3">
           <h2 className="text-2xl font-extrabold md:text-3xl">{t(UI.galleryTitle, locale)}</h2>
           <span className="text-sm text-[color:var(--ink)]/55">
-            {ALL_MEDIA.length} {t(UI.stills, locale)} · {MEDIA_CLIPS.length} {t(UI.clipsLabel, locale)}
+            {ALL_MEDIA.length} {t(UI.stills, locale)}
+            {MEDIA_CLIPS.length > 0 ? ` · ${MEDIA_CLIPS.length} ${t(UI.clipsLabel, locale)}` : ""}
           </span>
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[color:var(--ink)]/60">
@@ -120,7 +121,7 @@ export default async function MediaPage() {
           </div>
         ))}
 
-        <div className="mt-16">
+        <div className="mt-16" hidden={MEDIA_CLIPS.length === 0}>
           <h3 className="text-lg font-bold">{t(UI.clipsTitle, locale)}</h3>
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {MEDIA_CLIPS.map((clip) => (

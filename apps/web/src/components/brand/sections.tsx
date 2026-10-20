@@ -40,16 +40,17 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────────────
-   The backdrop is one of the office's own exterior visualisations rather than
-   a skyline nobody here built. It is decorative — the headline beside it says
+   The backdrop is the association's own community illustration from its site —
+   a mother and child at the centre, with care, meetings and the local
+   community around them. It is decorative — the headline beside it says
    everything the image does — so it carries an empty alt, and the gradient
    over it is what keeps the copy readable rather than luck about where the
-   building falls in frame. */
+   figures fall in frame. */
 export function Hero({ locale }: { locale: Locale }) {
   return (
     <section className="relative isolate overflow-hidden bg-[#071f1e] text-white">
       <img
-        src="/img/projects/project-23.png"
+        src="/img/assoc/community-montage.jpg"
         alt=""
         aria-hidden="true"
         className="absolute inset-0 -z-20 size-full object-cover object-center opacity-70"
