@@ -31,7 +31,7 @@ async function load(routes: Record<string, unknown>, calls: string[] = []) {
   return import("../mailcow");
 }
 
-const APP_ALIAS = { id: 24, address: "@example.com", goto: "info@example.com", active: 1 };
+const APP_ALIAS = { id: 24, address: "@gmquran.com", goto: "info@gmquran.com", active: 1 };
 const OTHER_ALIAS = { id: 99, address: "hello@partner-one.example", goto: "someone@partner-one.example", active: 1 };
 
 afterEach(() => vi.unstubAllGlobals());
@@ -50,7 +50,7 @@ describe("alias domain guard", () => {
     const mc = await load({ "/get/alias/99": OTHER_ALIAS, "/delete/alias": [{ type: "success" }] }, calls);
     const r = await mc.deleteAlias(99);
     expect(r.ok).toBe(false);
-    expect(r.message).toMatch(/does not belong to example\.com/);
+    expect(r.message).toMatch(/does not belong to gmquran\.com/);
     // The important half: the destructive call must not have been made.
     expect(calls).not.toContain("POST /delete/alias");
   });
@@ -67,14 +67,14 @@ describe("alias domain guard", () => {
     const mc = await load({ "/get/alias/all": [APP_ALIAS, OTHER_ALIAS] });
     const r = await mc.listAliases();
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.data.map((a) => a.address)).toEqual(["@example.com"]);
+    if (r.ok) expect(r.data.map((a) => a.address)).toEqual(["@gmquran.com"]);
   });
 });
 
 describe("mailbox domain guard", () => {
   it("rejects mailbox operations outside the domain", async () => {
     const mc = await load({});
-    await expect(mc.deleteMailbox("someone@partner-one.example")).rejects.toThrow(/Only @example\.com/);
+    await expect(mc.deleteMailbox("someone@partner-one.example")).rejects.toThrow(/Only @gmquran\.com/);
     await expect(mc.setMailboxPassword("someone@partner-one.example", "x".repeat(12))).rejects.toThrow();
     await expect(mc.setMailboxActive("someone@partner-one.example", false)).rejects.toThrow();
   });
@@ -93,7 +93,7 @@ describe("failure reporting", () => {
   });
 
   it("reports an unreachable server instead of throwing", async () => {
-    const mc = await load({ "/get/mailbox/all/example.com": new Error("ECONNREFUSED") });
+    const mc = await load({ "/get/mailbox/all/gmquran.com": new Error("ECONNREFUSED") });
     const r = await mc.listMailboxes();
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/Could not reach the mail server/);
@@ -131,8 +131,8 @@ describe("failure reporting", () => {
 describe("unit conversion", () => {
   it("converts mailcow byte counts to MB", async () => {
     const mc = await load({
-      "/get/mailbox/all/example.com": [
-        { username: "a@example.com", name: "A", active: 1, quota: 3221225472, quota_used: 363594302, messages: 772, last_imap_login: "0" },
+      "/get/mailbox/all/gmquran.com": [
+        { username: "a@gmquran.com", name: "A", active: 1, quota: 3221225472, quota_used: 363594302, messages: 772, last_imap_login: "0" },
       ],
     });
     const r = await mc.listMailboxes();
@@ -146,8 +146,8 @@ describe("unit conversion", () => {
 
   it("maps the domain status fields the panel renders", async () => {
     const mc = await load({
-      "/get/domain/example.com": {
-        domain_name: "example.com",
+      "/get/domain/gmquran.com": {
+        domain_name: "gmquran.com",
         active: 1,
         mboxes_in_domain: 15,
         mboxes_left: 35,

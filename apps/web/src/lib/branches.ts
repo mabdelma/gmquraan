@@ -75,7 +75,7 @@ export function defaultBranches(): Omit<BranchRow, "id">[] {
     taxLabel: REGISTRATION.taxNo ? "Tax No." : null,
     taxNo: REGISTRATION.taxNo,
     authority: REGISTRATION.authority,
-    // Falls back to the city so `formatAddress` never renders ", , Example Country".
+    // Falls back to the city so `formatAddress` never renders ", , Egypt".
     addressLine1: o.area ?? o.city,
     addressLine2: null,
     city: o.city,

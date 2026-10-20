@@ -12,14 +12,14 @@ export const dynamic = "force-dynamic";
 const UPDATED = "October 2, 2026";
 
 /**
- * The governing law is Example Country, not the UAE: the office is national and its
- * offices are in Capital City and North City. The reference is to Law No. 151 of 2020 on
- * the Protection of Personal Data, which is the national statute — the UAE
- * PDPL has no application here and citing it would be a worse error than
+ * The governing law is Egyptian: the association is registered in Egypt and
+ * its office is in Sahel Selim, Assiut. The reference is to Law No. 151 of
+ * 2020 on the Protection of Personal Data, which is the Egyptian statute — the
+ * UAE PDPL has no application here and citing it would be a worse error than
  * citing nothing.
  */
 const INTRO = [
-  `${COMPANY.name} ("we", "us", or "our") is an engineering consultancy and general contracting office based in Example Country. We are committed to protecting your personal data and respecting your privacy. This Privacy Policy explains what personal data we collect, why and how we process it, who we share it with, how long we keep it, and the rights you have over it.`,
+  `${COMPANY.name} ("we", "us", or "our") is a registered community association based in Sahel Selim, Assiut Governorate, Egypt. We are committed to protecting your personal data and respecting your privacy. This Privacy Policy explains what personal data we collect, why and how we process it, who we share it with, how long we keep it, and the rights you have over it.`,
   `For the purposes of national Law No. 151 of 2020 on the Protection of Personal Data, ${COMPANY.name} acts as the data controller for personal data processed through the ${COMPANY.domain} website and its associated services.`,
 ];
 
@@ -52,7 +52,7 @@ const SECTIONS: LegalClause[] = [
     "• Successors — in connection with a merger, acquisition, or asset sale, subject to this policy.",
   ] },
   { h: "5. International transfers", body: [
-    "We work in Example Country and on projects in Region Two and Region Three, so personal data may be transferred outside Example Country. Where it is, we rely on lawful transfer mechanisms under national data protection law to ensure your data remains protected.",
+    "We work locally, in Sahel Selim and East Tanagha, and we do not routinely transfer personal data outside Egypt. Where a service provider we rely on processes data abroad, we rely on lawful transfer mechanisms under Egyptian data protection law to ensure your data remains protected.",
   ] },
   { h: "6. Data retention", body: [
     "We keep personal data only for as long as necessary for the purposes set out above: for the life of your relationship with us and a reasonable period afterwards, and longer where required to meet legal, tax, professional record-keeping, or dispute-resolution obligations. Project records in particular are kept for the period a claim could still be brought on the work. When data is no longer needed, we delete or irreversibly anonymise it.",

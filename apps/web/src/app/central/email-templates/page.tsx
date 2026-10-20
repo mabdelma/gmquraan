@@ -6,15 +6,20 @@ import { getEmailTemplatesMessages } from "@/lib/email-templates-i18n";
 import { getEmailTemplateOverrides, EDITABLE_TEMPLATES } from "@/lib/settings";
 import { EmailTemplateEditor, type EditorItem } from "@/components/EmailTemplateEditor";
 import { translateBatch } from "@/lib/translate";
+import { COMPANY } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 
-// English defaults shown as placeholders (mirror of the notifications service templates).
+// English defaults shown as placeholders (mirror of the notifications service
+// templates). The brand name is read from COMPANY rather than written out, so
+// these cannot drift from the name the rest of the site renders.
+const BRAND = COMPANY.shortName;
+
 const DEFAULTS: Record<string, { subject: string; title: string; body: string; btn: string }> = {
-  invite: { subject: "Your Example Company account", title: "Welcome to Example Company", body: "An account has been created for you. Set your password to sign in.", btn: "Set your password" },
-  verify: { subject: "Verify your Example Company email", title: "Confirm your email", body: "Welcome to Example Company! Confirm your email to secure your account.", btn: "Verify email" },
-  reset: { subject: "Reset your Example Company password", title: "Reset your password", body: "We received a request to reset your password.", btn: "Choose a new password" },
-  adminInvite: { subject: "Set your Unskinned admin password", title: "You've been added as an admin", body: "Set your password to access the Unskinned staff console.", btn: "Set password" },
+  invite: { subject: `Your ${BRAND} account`, title: `Welcome to ${BRAND}`, body: "An account has been created for you. Set your password to sign in.", btn: "Set your password" },
+  verify: { subject: `Verify your ${BRAND} email`, title: "Confirm your email", body: `Welcome to ${BRAND}! Confirm your email to secure your account.`, btn: "Verify email" },
+  reset: { subject: `Reset your ${BRAND} password`, title: "Reset your password", body: "We received a request to reset your password.", btn: "Choose a new password" },
+  adminInvite: { subject: `Set your ${BRAND} admin password`, title: "You've been added as an admin", body: `Set your password to access the ${BRAND} staff console.`, btn: "Set password" },
   solutionApproved: { subject: "Your solution is now live", title: "Your solution was approved", body: "Good news — your solution has been reviewed and is now live.", btn: "View your listing" },
   payoutSent: { subject: "You've been paid", title: "A payout is on its way", body: "We've recorded a payout for your share of completed sales. See the details in your earnings.", btn: "View earnings" },
   partnerDemoRequest: { subject: "New demo request for your solution", title: "You have a new demo request", body: "A client has requested a demo of one of your solutions.", btn: "View request" },

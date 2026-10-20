@@ -15,39 +15,39 @@ export async function generateMetadata(): Promise<Metadata> {
 const UI = {
   missionTitle: { ar: "رسالتنا", en: "Our mission", es: "Nuestra misión", pt: "A nossa missão", fr: "Notre mission" } as Bi,
   missionBody: {
-    ar: "أن يحصل العميل على التصميم والمكتب الفني والترخيص والتنفيذ والإشراف من جهة واحدة مسؤولة، بدل أن يتنقّل بين أربع جهات ويتحمّل هو ما يسقط بينها.",
-    en: "That a client gets design, technical office, permits, construction and supervision from one accountable office, instead of moving between four firms and carrying whatever falls between them.", es: "Que el cliente obtenga diseño, oficina técnica, licencias, obra y supervisión de una sola oficina responsable, en lugar de ir entre cuatro empresas y cargar con lo que se pierde entre ellas.", pt: "Que o cliente obtenha projeto, escritório técnico, licenças, obra e fiscalização de um único gabinete responsável, em vez de andar entre quatro empresas e carregar com o que se perde entre elas.", fr: "Que le client obtienne conception, bureau technique, permis, travaux et supervision d'un seul bureau responsable, plutôt que de passer entre quatre entreprises et d'assumer ce qui tombe entre elles.",
+    ar: "أن يجد أهل ساحل سليم في جمعيتهم مكاناً يحفظ أبناؤهم فيه كتاب الله، ويجد اليتيم فيه كافلاً، والأم حضانة، والمرأة عملاً، والأسرة عوناً يبدأ به عملاً تعيش منه — من جهة واحدة يعرفونها ويثقون بها.",
+    en: "That the people of Sahel Selim find in their association a place where their children memorise the Qur'an, where an orphan finds a sponsor, a mother a nursery, a woman work, and a household the means to start something it can live from — from one body they know and trust.", es: "Que la gente de Sahel Selim encuentre en su asociación un lugar donde sus hijos memoricen el Corán, donde el huérfano halle un padrino, la madre una guardería, la mujer un trabajo y la familia el medio de iniciar algo de lo que vivir, desde una sola entidad que conocen y en la que confían.", pt: "Que o povo de Sahel Selim encontre na sua associação um lugar onde os filhos memorizem o Alcorão, onde o órfão encontre um padrinho, a mãe uma creche, a mulher trabalho e a família os meios de iniciar algo de que possa viver — a partir de uma só entidade que conhecem e em que confiam.", fr: "Que les habitants de Sahel Selim trouvent dans leur association un lieu où leurs enfants mémorisent le Coran, où l'orphelin trouve un parrain, la mère une crèche, la femme un travail et le foyer de quoi lancer une activité dont il puisse vivre — auprès d'une seule entité qu'ils connaissent et en qui ils ont confiance.",
   } as Bi,
   whatTitle: { ar: "ماذا نفعل", en: "What we do", es: "Qué hacemos", pt: "O que fazemos", fr: "Ce que nous faisons" } as Bi,
   whatItems: [
-    { ar: "تصميم معماري وإنشائي وميكانيكي وكهربائي", en: "Architectural, structural, mechanical and electrical design", es: "Diseño arquitectónico, estructural, mecánico y eléctrico", pt: "Projeto de arquitetura, estruturas, mecânica e eletricidade", fr: "Conception architecturale, structurelle, mécanique et électrique" },
-    { ar: "أعمال المكتب الفني: الحصر والمستخلصات والمناقصات", en: "Technical-office work: quantities, payment statements and tenders", es: "Trabajos de oficina técnica: mediciones, certificaciones y licitaciones", pt: "Trabalhos de escritório técnico: medições, autos e concursos", fr: "Travaux de bureau technique : métrés, situations et appels d'offres" },
-    { ar: "استخراج تراخيص البناء ومتابعتها حتى الاعتماد", en: "Building permits, pursued to approval", es: "Licencias de obra, gestionadas hasta su aprobación", pt: "Licenças de construção, acompanhadas até à aprovação", fr: "Permis de construire, suivis jusqu'à l'approbation" },
-    { ar: "تنفيذ إنشائي بإشراف مقيم حتى التسليم", en: "Construction execution with resident supervision to handover", es: "Ejecución de obra con supervisión residente hasta la entrega", pt: "Execução de obra com fiscalização residente até à entrega", fr: "Exécution des travaux avec supervision résidente jusqu'à la réception" },
-    { ar: "رسومات تنفيذية ونمذجة BIM وإظهار ثلاثي الأبعاد", en: "Shop drawings, BIM modelling and 3D visualisation", es: "Planos de taller, modelado BIM y visualización 3D", pt: "Desenhos de execução, modelação BIM e visualização 3D", fr: "Plans d'exécution, modélisation BIM et visualisation 3D" },
+    { ar: "حلقات تحفيظ القرآن الكريم وتعليم التلاوة والتجويد", en: "Qur'an memorisation circles and the teaching of recitation", es: "Círculos de memorización del Corán y enseñanza de la recitación", pt: "Círculos de memorização do Alcorão e ensino da recitação", fr: "Cercles de mémorisation du Coran et enseignement de la récitation" },
+    { ar: "كفالة الأيتام ومتابعة أسرهم", en: "Orphan sponsorship, with follow-up for their families", es: "Apadrinamiento de huérfanos y seguimiento de sus familias", pt: "Apadrinhamento de órfãos e acompanhamento das suas famílias", fr: "Parrainage d'orphelins et suivi de leurs familles" },
+    { ar: "حضانة لأطفال المجتمع المحلي", en: "A nursery for the children of the local community", es: "Una guardería para los niños de la comunidad local", pt: "Uma creche para as crianças da comunidade local", fr: "Une crèche pour les enfants de la communauté locale" },
+    { ar: "مشغل يتيح التدريب والعمل، وبخاصة للمرأة", en: "A workshop offering training and work, for women in particular", es: "Un taller que ofrece formación y trabajo, en especial a las mujeres", pt: "Uma oficina que oferece formação e trabalho, em especial às mulheres", fr: "Un atelier offrant formation et travail, en particulier aux femmes" },
+    { ar: "مشروعات خدمية وتوعية صحية، وإقراض للأسر والمشروعات الصغيرة", en: "Service projects, health awareness, and lending to households and small projects", es: "Proyectos de servicio, concienciación sanitaria y préstamos a familias y pequeños proyectos", pt: "Projetos de serviço, sensibilização para a saúde e crédito a famílias e pequenos projetos", fr: "Projets de service, sensibilisation à la santé et prêts aux ménages et petits projets" },
   ] as Bi[],
   valuesTitle: { ar: "قيمنا", en: "Our values", es: "Nuestros valores", pt: "Os nossos valores", fr: "Nos valeurs" } as Bi,
   valuesSubtitle: {
-    ar: "المبادئ التي يُدار بها كل مشروع في المكتب.",
-    en: "The principles every project in the office is run on.", es: "Los principios con los que se dirige cada proyecto de la oficina.", pt: "Os princípios com que se conduz cada projeto do gabinete.", fr: "Les principes selon lesquels chaque projet du bureau est conduit.",
+    ar: "القيم التي أعلنتها الجمعية، ويُقاس بها كل ما تعمله.",
+    en: "The values the association has published, and the measure of everything it does.", es: "Los valores que la asociación ha publicado y la medida de todo lo que hace.", pt: "Os valores que a associação publicou e a medida de tudo o que faz.", fr: "Les valeurs publiées par l'association et la mesure de tout ce qu'elle fait.",
   } as Bi,
   reachTitle: { ar: "أين نعمل", en: "Where we work", es: "Dónde trabajamos", pt: "Onde trabalhamos", fr: "Où nous intervenons" } as Bi,
   reachSubtitle: {
-    ar: "مكتبان في بلد المثال، وأعمال هندسية ومقاولات في المنطقة الثانية والمنطقة الثالثة.",
-    en: "Two offices in Example Country, with engineering and contracting work in Region Two and Region Three.", es: "Dos oficinas en País de Ejemplo, con trabajos de ingeniería y contratación en Región Dos y Región Tres.", pt: "Dois escritórios no País de Exemplo, com trabalhos de engenharia e contratação na Região Dois e na Região Três.", fr: "Deux bureaux en Pays d'Exemple, avec des travaux d'ingénierie et d'entreprise en Région Deux et en Région Trois.",
+    ar: "المقر الرئيسي بساحل سليم، التناغة الشرقية، محافظة أسيوط.",
+    en: "The main office in Sahel Selim, East Tanagha, Assiut Governorate.", es: "La oficina principal en Sahel Selim, Tanagha Este, gobernación de Asiut.", pt: "O escritório principal em Sahel Selim, Tanagha Este, governorado de Assiut.", fr: "Le bureau principal à Sahel Selim, Tanagha-Est, gouvernorat d'Assiout.",
   } as Bi,
-  leadershipTitle: { ar: "القيادة", en: "Leadership", es: "Dirección", pt: "Direção", fr: "Direction" } as Bi,
+  leadershipTitle: { ar: "التواصل", en: "Contact", es: "Contacto", pt: "Contacto", fr: "Contact" } as Bi,
   leadershipSubtitle: {
-    ar: "الاسم المدوّن على بطاقة العمل الرسمية للمكتب.",
-    en: "The name printed on the office's business card.", es: "El nombre impreso en la tarjeta de visita de la oficina.", pt: "O nome impresso no cartão de visita do gabinete.", fr: "Le nom imprimé sur la carte de visite du bureau.",
+    ar: "الجمعية لا تنشر أسماء شاغلي المناصب، فالبطاقة تحمل المقر الرئيسي نفسه.",
+    en: "The association publishes no officer names, so the card carries the main office itself.", es: "La asociación no publica los nombres de sus cargos, por lo que la tarjeta lleva la propia oficina principal.", pt: "A associação não publica os nomes dos seus dirigentes, pelo que o cartão leva o próprio escritório principal.", fr: "L'association ne publie pas le nom de ses responsables : la carte porte donc le bureau principal lui-même.",
   } as Bi,
-  profile: { ar: "الملف المهني", en: "Professional profile", es: "Perfil profesional", pt: "Perfil profissional", fr: "Profil professionnel" } as Bi,
+  profile: { ar: "الملف التعريفي", en: "Profile", es: "Perfil", pt: "Perfil", fr: "Profil" } as Bi,
   activitiesTitle: { ar: "الأنشطة", en: "Our activities", es: "Nuestras actividades", pt: "As nossas atividades", fr: "Nos activités" } as Bi,
   activitiesLabel: {
-    ar: "الأنشطة التي يزاولها المكتب:",
-    en: "The activities the office practises:", es: "Las actividades que ejerce la oficina:", pt: "As atividades que o gabinete exerce:", fr: "Les activités exercées par le bureau :",
+    ar: "الأنشطة التي تزاولها الجمعية:",
+    en: "The activities the association carries out:", es: "Las actividades que realiza la asociación:", pt: "As atividades que a associação realiza:", fr: "Les activités menées par l'association :",
   } as Bi,
-  activitiesMore: { ar: "تفاصيل الأنشطة والتسجيل", en: "Activity and registration detail", es: "Detalle de actividades y registro", pt: "Detalhe das atividades e do registo", fr: "Détail des activités et de l'enregistrement" } as Bi,
+  activitiesMore: { ar: "تفاصيل الأنشطة والإشهار", en: "Activity and registration detail", es: "Detalle de actividades y registro", pt: "Detalhe das atividades e do registo", fr: "Détail des activités et de l'enregistrement" } as Bi,
 };
 
 /**

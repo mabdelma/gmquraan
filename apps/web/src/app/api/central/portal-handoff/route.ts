@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
  * Hand a signed-in central administrator across to the team portal.
  *
  * Deliberately a handoff rather than a shared cookie. The central session is a
- * host-only cookie on purpose — widening it to .example.com would
+ * host-only cookie on purpose — widening it to .gmquran.com would
  * send an admin credential to the advisor, the mail host, ntfy and every other
  * subdomain, which is a real regression in exchange for a small convenience.
  *
@@ -42,7 +42,7 @@ export async function GET() {
   ).toString("base64url");
   const sig = createHmac("sha256", secret).update(payload).digest("base64url");
 
-  const portal = process.env.PORTAL_URL || "https://workforce.example.com";
+  const portal = process.env.PORTAL_URL || "https://workforce.gmquran.com";
   return new NextResponse(null, {
     status: 303,
     headers: {

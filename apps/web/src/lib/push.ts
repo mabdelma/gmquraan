@@ -140,7 +140,7 @@ function vapidConfigured(): boolean {
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return (vapidReady = false);
   try {
-    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:info@example.com", pub, priv);
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:info@gmquran.com", pub, priv);
     return (vapidReady = true);
   } catch {
     return (vapidReady = false);
@@ -167,7 +167,7 @@ async function sendWeb(token: string, p: PushPayload): Promise<SendResult> {
 
 // ── ntfy / UnifiedPush (native Android, self-hosted, Google-free) ────────────
 // The token IS the app's UnifiedPush endpoint URL (a public ntfy topic, e.g.
-// https://ntfy.example.com/up<random>). We POST the payload to it;
+// https://ntfy.gmquran.com/up<random>). We POST the payload to it;
 // the ntfy distributor on the device forwards it to the app, which displays it.
 async function sendNtfy(endpoint: string, p: PushPayload): Promise<SendResult> {
   if (!/^https:\/\/[^ ]+/i.test(endpoint)) return { sent: false, remove: true };

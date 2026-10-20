@@ -56,7 +56,7 @@ export function AdvisorWidget({ locale = "en", t }: { locale?: Locale; t?: Advis
           <div className="app-gradient text-[color:var(--on-accent)] px-4 py-3 font-bold flex items-center justify-between">
             <span>{L.title}</span>
             <a
-              href="https://ai.example.com"
+              href="https://ai.gmquran.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-semibold bg-[color:var(--bg)]/15 hover:bg-[color:var(--bg)]/25 rounded-full px-2.5 py-1"

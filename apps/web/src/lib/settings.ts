@@ -23,7 +23,7 @@ export const EMAIL_DEFAULTS: EmailSettings = {
 /** Public base URL for turning relative upload paths into absolute (email-safe) URLs.
  *  Use the apex (no www) — the www host 301-redirects, which Outlook/Gmail image
  *  loading handles poorly. */
-export const PUBLIC_BASE = (process.env.APP_URL || "https://example.com")
+export const PUBLIC_BASE = (process.env.APP_URL || "https://gmquran.com")
   .replace(/^https?:\/\/www\./, "https://")
   .replace(/\/$/, "");
 

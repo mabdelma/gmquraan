@@ -10,7 +10,7 @@ export type LegalClause = { h: string; body: string[] };
 const LAST_UPDATED = "Last updated:";
 const EFFECTIVE = "· Effective immediately on publication.";
 const GOVERNING =
-  "This document is governed by the laws of the Arab Republic of Example Country, without prejudice to mandatory consumer- " +
+  "This document is governed by the laws of the Arab Republic of Egypt, without prejudice to mandatory consumer- " +
   "and data-protection rights you may have under the laws of your country of residence. The English version is " +
   "the governing version; translations are provided for convenience only.";
 

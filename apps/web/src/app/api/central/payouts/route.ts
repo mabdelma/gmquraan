@@ -8,7 +8,7 @@ import { notifyUser } from "@/lib/push";
 import { emit } from "@/lib/events";
 import { PAYOUT_MIN_THRESHOLD_CENTS } from "@/lib/partner-policy";
 
-const APP_URL = process.env.APP_URL || "https://example.com";
+const APP_URL = process.env.APP_URL || "https://gmquran.com";
 const BILLING = process.env.BILLING_URL_INTERNAL || "http://app-billing:8080";
 
 /** Record a reseller payout (central admin). */

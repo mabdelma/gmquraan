@@ -52,7 +52,7 @@ export function CentralNav({ who, t, locale }: { who: string; t: CentralMessages
             </Link>
           ))}
           <a
-            href="https://passive.example.com"
+            href="https://passive.gmquran.com"
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-lg text-sm transition text-[color:var(--accent-text)]/80 hover:bg-[color:var(--accent-text)]/10"

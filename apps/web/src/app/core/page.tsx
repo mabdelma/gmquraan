@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * core.example.com — GM-OS offered to other companies.
+ * core.gmquran.com — GM-OS offered to other companies.
  *
  * Every figure on this page is read from the running system rather than typed
  * into the copy: the zones, document types, states, confidentiality levels and
@@ -249,7 +249,7 @@ export default async function CorePage({
         {sp.sent && (
           <p role="status" className="mt-6 rounded-2xl px-6 py-5 text-sm panel [color:var(--ok)]">
             Thank you — that has reached us and somebody will reply from
-            example.com.
+            gmquran.com.
           </p>
         )}
         {sp.error && (
@@ -292,7 +292,7 @@ export default async function CorePage({
                 pattern="[a-z0-9-]+"
               />
               <span className="shrink-0 text-sm [color:var(--muted)]">
-                .example.com
+                .gmquran.com
               </span>
             </span>
           </label>

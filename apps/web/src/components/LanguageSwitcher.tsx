@@ -11,7 +11,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
     // Scope to the apex domain in production so subdomains (central, ai) inherit
     // the chosen language; host-only on localhost.
     const host = typeof window !== "undefined" ? window.location.hostname : "";
-    const domain = host.endsWith("example.com") ? "; domain=.example.com" : "";
+    const domain = host.endsWith("gmquran.com") ? "; domain=.gmquran.com" : "";
     document.cookie = `${LOCALE_COOKIE}=${locale}; path=/${domain}; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
     router.refresh();
   }

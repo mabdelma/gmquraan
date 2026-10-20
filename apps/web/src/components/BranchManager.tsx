@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BranchRow } from "@/lib/branches";
+import { COMPANY } from "@/lib/content";
 
 const input =
   "bg-[color:var(--bg)] border [border-color:var(--hairline)] [color:var(--ink)] rounded-lg px-3 py-2 text-sm w-full";
@@ -145,7 +146,7 @@ export function BranchManager({ branches, usage }: { branches: BranchRow[]; usag
 
       <h4 className="text-xs font-semibold [color:var(--muted)] mt-5">Legal entity</h4>
       <div className="grid gap-3 md:grid-cols-2 mt-2">
-        {field(d, "legalName", "Legal name", "Example Company")}
+        {field(d, "legalName", "Legal name", COMPANY.name)}
         {field(d, "legalForm", "Legal form (optional)", "Sociedad Limitada")}
         {field(d, "registrationLabel", "Registration label", "CIF / Licence / Corporation No.")}
         {field(d, "registrationNo", "Registration number", "B88990122")}
@@ -165,7 +166,7 @@ export function BranchManager({ branches, usage }: { branches: BranchRow[]; usag
         {field(d, "postalCode", "Postal code (optional)", "47320")}
         {field(d, "countryName", "Country", "Spain")}
         {field(d, "phone", "Phone (optional)", "+1 555 555 0107")}
-        {field(d, "email", "Email (optional)", "info@example.com")}
+        {field(d, "email", "Email (optional)", "info@gmquran.com")}
       </div>
 
       <label className="flex items-center gap-2 mt-4">

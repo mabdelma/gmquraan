@@ -114,7 +114,7 @@ describe("splitting a stored location", () => {
   });
 
   it("round-trips", () => {
-    for (const l of ["Example Village, Canada", "North City, Example Country", "Spain"]) {
+    for (const l of ["Example Village, Canada", "North City, Egypt", "Spain"]) {
       const { city, country } = splitLocation(l);
       expect(joinLocation(city, country)).toBe(l);
     }

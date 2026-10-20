@@ -41,9 +41,9 @@ export async function Footer() {
               <span className="text-[color:var(--ink)]/80">{brand.rest}</span>
             </span>
           </div>
-          {/* The office's own line, from the reviewed brand copy. */}
+          {/* The association's own line, from the reviewed brand copy. */}
           <p className="text-[color:var(--ink)]/60 mt-2">{pick(ABOUT.title, locale)}</p>
-          {/* Founding line from the supplied profile: 2016, Capital City. */}
+          {/* Registration line: no. 224 of 1977, Sahel Selim. */}
           <p className="text-[color:var(--ink)]/55 mt-3">{t.founded}</p>
         </div>
         <div>
@@ -104,12 +104,12 @@ export async function Footer() {
           <div>
             {t.developedBy}{" "}
             <a
-              href="https://example.com"
+              href="https://gmquran.com"
               target="_blank"
               rel="noopener"
               className="hover:text-[color:var(--accent-text)]"
             >
-              example.com
+              gmquran.com
             </a>
           </div>
           <div>

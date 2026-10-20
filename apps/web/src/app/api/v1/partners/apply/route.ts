@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   // Best-effort ops notification.
   await sendEmail({
-    to: process.env.MONITOR_ALERT_TO || "info@example.com",
+    to: process.env.MONITOR_ALERT_TO || "info@gmquran.com",
     template: "systemAlert",
     vars: { alertSubject: `Partner application — ${name}`, message: `${name} <${email}>\n${body}` },
   });

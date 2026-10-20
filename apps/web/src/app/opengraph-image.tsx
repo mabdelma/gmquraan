@@ -39,7 +39,7 @@ export default function OG() {
         {/* The gold rule that runs through the rest of the brand. */}
         <div style={{ display: "flex", width: 240, height: 3, background: GOLD, marginTop: 34 }} />
         <div style={{ fontSize: 26, color: MUTED, marginTop: 30 }}>
-          {`Since ${COMPANY.foundedYear} · ${COMPANY.foundedCity} & North City, ${COMPANY.country} · ${COMPANY.domain}`}
+          {`Since ${COMPANY.foundedYear} · ${COMPANY.foundedCity}, ${COMPANY.country} · ${COMPANY.domain}`}
         </div>
       </div>
     ),

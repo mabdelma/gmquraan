@@ -52,7 +52,7 @@ const SECTIONS: LegalClause[] = [
     "We may modify, suspend, or discontinue parts of the website, and may update these Terms from time to time. Material changes will be posted here with a new \"last updated\" date. Your continued use after changes take effect constitutes acceptance.",
   ] },
   { h: "11. Governing law & disputes", body: [
-    "These Terms are governed by the laws of the Arab Republic of Example Country, and the national courts have jurisdiction, without prejudice to any mandatory rights you have to bring proceedings in your country of residence. We encourage you to contact us first so we can try to resolve any dispute amicably.",
+    "These Terms are governed by the laws of the Arab Republic of Egypt, and the national courts have jurisdiction, without prejudice to any mandatory rights you have to bring proceedings in your country of residence. We encourage you to contact us first so we can try to resolve any dispute amicably.",
   ] },
   { h: "12. Contact", body: [
     `Questions about these Terms can be sent to ${COMPANY.name} at ${COMPANY.email}.`,

@@ -11,10 +11,10 @@
  * empty array — an unreachable mail server must look different from a domain
  * with no mailboxes.
  */
-const BASE = process.env.MAILCOW_API_URL || ""; // e.g. https://mail.example.com/api/v1
+const BASE = process.env.MAILCOW_API_URL || ""; // e.g. https://mail.gmquran.com/api/v1
 const KEY = process.env.MAILCOW_API_KEY || "";
-/** Comma-separated, e.g. MAIL_DOMAINS=example.com,example.com */
-export const MAIL_DOMAINS = (process.env.MAIL_DOMAINS || "example.com")
+/** Comma-separated, e.g. MAIL_DOMAINS=gmquran.com,gmquran.com */
+export const MAIL_DOMAINS = (process.env.MAIL_DOMAINS || "gmquran.com")
   .split(",")
   .map((d) => d.trim().toLowerCase())
   .filter(Boolean);

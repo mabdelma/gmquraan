@@ -6,7 +6,7 @@ import { tenantSlugProblem } from "@app/core";
 export const dynamic = "force-dynamic";
 
 /**
- * An enquiry from core.example.com.
+ * An enquiry from core.gmquran.com.
  *
  * Written straight to the lead register rather than forwarded to the engagement
  * service. The contact form forwards, and when that service is not running it
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
   const detail = [
     people ? `Around ${people} people.` : null,
-    slug ? `Wants ${slug}.example.com.` : null,
+    slug ? `Wants ${slug}.gmquran.com.` : null,
     message || null,
   ]
     .filter(Boolean)

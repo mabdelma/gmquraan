@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
   // Best-effort ops notification.
   await sendEmail({
-    to: process.env.MONITOR_ALERT_TO || "info@example.com",
+    to: process.env.MONITOR_ALERT_TO || "info@gmquran.com",
     template: "systemAlert",
     vars: { alertSubject: `Lead reply from ${from}`, message: `${subject ? subject + "\n\n" : ""}${text}\n\n— Threaded onto lead ${leadId}.` },
   });

@@ -28,7 +28,7 @@ describe("phone link derivation", () => {
 describe("person input handling", () => {
   const base = {
     name: "Director Name",
-    email: "director@example.com",
+    email: "director@gmquran.com",
     location: "Example Village",
     roleCopy: { en: "Director" },
     phones: [{ key: "company", value: "+1 555 555 0102" }],
@@ -124,7 +124,7 @@ describe("vCard generation", () => {
     photo: "",
     qr: "",
     vcf: "",
-    email: "director@example.com",
+    email: "director@gmquran.com",
     phones: [{ key: "company" as const, value: "+1 555 555 0102", href: "tel:+15555550102" }],
     whatsapp: { display: "+1 555 555 0102", href: "https://wa.me/15555550102" },
     location: "Example Village",
@@ -138,7 +138,7 @@ describe("vCard generation", () => {
     expect(v).toContain("FN:Director Name");
     expect(v).toContain("TITLE:Director");
     expect(v).toContain("TEL;TYPE=WORK,VOICE:+15555550102");
-    expect(v).toContain("EMAIL;TYPE=WORK,PREF:director@example.com");
+    expect(v).toContain("EMAIL;TYPE=WORK,PREF:director@gmquran.com");
   });
 
   it("folds long lines to the 75-octet limit", () => {

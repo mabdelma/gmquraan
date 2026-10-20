@@ -268,7 +268,7 @@ export function MailManager({ mailboxes, aliases, domains, t }: { mailboxes: Row
             required
             value={aliasForm.goto}
             onChange={(e) => setAliasForm({ ...aliasForm, goto: e.target.value })}
-            placeholder="info@example.com"
+            placeholder="info@gmquran.com"
             className={`${input} w-full`}
           />
         </div>

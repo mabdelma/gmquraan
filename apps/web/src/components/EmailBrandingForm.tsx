@@ -62,7 +62,7 @@ export function EmailBrandingForm({ initial, t }: { initial: EmailSettings; t: T
 
       <div>
         <label className="text-xs text-[color:var(--ink)]/50">{t.replyTo}</label>
-        <input name="replyTo" type="email" defaultValue={initial.replyTo} placeholder="info@example.com" className={input} />
+        <input name="replyTo" type="email" defaultValue={initial.replyTo} placeholder="info@gmquran.com" className={input} />
       </div>
 
       <div>

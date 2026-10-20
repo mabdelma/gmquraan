@@ -105,12 +105,17 @@ English sentence shown to a French reader.
 npm install
 npx prisma generate --schema packages/db/prisma/schema.prisma
 
+npm run dev:infra   # Postgres on :5544 (Docker)
 npm run dev:web     # http://localhost:3000
 npm run test:web    # 136 tests
 npm run build:web
 ```
 
-The marketing pages render without any service or database running.
+**Postgres is required to serve pages**, even the public ones: the layout reads
+contact settings through Prisma, so without a reachable `DATABASE_URL` the
+homepage returns 500. The build and the test suite need no database — only
+`prisma generate`. The Fastify microservices are a separate matter: the public
+pages render fine without any of them running.
 
 The platform underneath (Fastify microservices, Prisma/Postgres, the realtime
 AI advisor, the workforce portal, Caddy/Docker deployment) is documented in

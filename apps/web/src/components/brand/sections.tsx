@@ -179,11 +179,12 @@ export function PracticeGrid({ locale }: { locale: Locale }) {
 }
 
 /* ── Reach ────────────────────────────────────────────────────────────────
-   Where the office works, from REGIONS in content.ts. Example Country is where the
-   offices and the stated work are; Region Two and Region Three are markets the
-   profile states it has worked in, and the research pack marks their project
-   detail as needing evidence — so they are listed as markets and carry no
-   project names, values or clients. */
+   Where the association works, from REGIONS in content.ts. There is one entry
+   and that is deliberate: this is a local association serving Sahel Selim and
+   East Tanagha in Assiut Governorate, and it claims no reach beyond that
+   anywhere on its own site. The strip is built for several regions, so it will
+   render more the day there are more — but padding it out would be inventing
+   a footprint rather than showing one. */
 export function ReachStrip({ locale }: { locale: Locale }) {
   return (
     <section className="bg-[#0c3433] text-white">

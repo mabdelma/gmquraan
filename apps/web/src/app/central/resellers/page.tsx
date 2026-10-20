@@ -51,7 +51,7 @@ export default async function CentralResellersPage() {
   const locale = await getLocale();
   const cp = getCentralPages(locale).res;
   const empty = getEmptyLabels(locale);
-  const baseUrl = process.env.APP_URL || "https://example.com";
+  const baseUrl = process.env.APP_URL || "https://gmquran.com";
   const pkRows = productKeys.map((k) => ({ ...k, lastUsedAt: k.lastUsedAt?.toISOString() ?? null, createdAt: k.createdAt.toISOString(), revokedAt: k.revokedAt?.toISOString() ?? null }));
   const [L_portfolio, L_portfolioSub, L_totalGross, L_commissionWord, L_thProduct, L_thSales, L_thGross, L_thCommission, L_connected, L_connectedSub] =
     await translateBatch(

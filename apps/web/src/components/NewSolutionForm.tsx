@@ -140,7 +140,7 @@ export function NewSolutionForm({
           name="url"
           type="url"
           inputMode="url"
-          placeholder="https://app.example.com"
+          placeholder="https://app.gmquran.com"
           defaultValue={d.url ?? undefined}
           className={input}
         />

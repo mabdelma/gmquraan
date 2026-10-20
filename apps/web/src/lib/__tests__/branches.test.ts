@@ -138,7 +138,7 @@ describe("vCard uses the person's own branches", () => {
     photo: "",
     qr: "",
     vcf: "",
-    email: "t@example.com",
+    email: "t@gmquran.com",
     phones: [{ key: "company" as const, value: "+1 555 555 0102", href: "tel:+15555550102" }],
     whatsapp: { display: "", href: "" },
     location: "",

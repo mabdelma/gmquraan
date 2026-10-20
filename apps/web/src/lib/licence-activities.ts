@@ -1,21 +1,20 @@
 /**
- * The activities the office practises, broken into their scope — the detail
- * behind the two lines in `ACTIVITIES` (content.ts). Rendered at /licence
- * (index) and /licence/[slug] (detail).
+ * The activities the association carries out, broken into their scope — the
+ * detail behind the six lines in `ACTIVITIES` (content.ts), grouped into the
+ * three areas they naturally fall into. Rendered at /licence (index) and
+ * /licence/[slug] (detail).
  *
- * ── Why there are no numbers on this page ────────────────────────────────────
- * The supplied company profile states that the office holds an engineering
- * registration, an engineering stamp and a tax registration. It gives none of
- * the numbers, and the research pack lists the syndicate number, commercial
- * register number and tax number under "Information Not Yet Safely
- * Established". So this file carries no identifier at all, and the page shows
- * `REGISTRATION.pending` where a number belongs. `code` exists on the type for
- * the day a certificate supplies one — it is not a field anybody should fill
- * from memory.
+ * ── Which numbers appear on this page ───────────────────────────────────────
+ * One: the association's registration, no. 224 of 1977, which it letters onto
+ * its own emblem. It is carried in `REGISTRATION.registerNo` rather than here.
+ * No tax number, licence number or professional-body registration has ever
+ * appeared on the association's site, so the page shows `REGISTRATION.pending`
+ * where those belong. `code` exists on the type for the day a certificate
+ * supplies one — it is not a field anybody should fill from memory.
  *
- * `opportunities` is what the activity authorises the office to take on. It
- * describes capability, never a commission: no client, project or value
- * appears here, because none has been evidenced.
+ * `opportunities` is what the activity area covers. It describes the work,
+ * never a particular case: no beneficiary, family or individual appears here,
+ * and none should — these are people, not references.
  */
 
 export type LicenceEntity = "eg";
@@ -34,78 +33,92 @@ export type LicenceActivity = {
 export const LICENCE_ENTITIES: Record<LicenceEntity, { flag: string; label: string; sub: string }> = {
   eg: {
     flag: "🇪🇬",
-    label: "Example Company",
-    sub: "Engineering consultancy & general contracting office · Capital City and North City, Example Country · working since 2016 · 2 activities",
+    label: "Association for the Preservation of the Holy Qur'an",
+    sub: "Registered community association · Sahel Selim, Assiut, Egypt · registered no. 224 of 1977 · 3 activities",
   },
 };
 
 export const LICENCE_ACTIVITIES: LicenceActivity[] = [
   {
-    slug: "engineering-consultancy",
+    slug: "quranic-education",
     entity: "eg",
-    title: "Engineering Consultancy",
-    titleAr: "الاستشارات الهندسية",
+    title: "Qur'anic Education",
+    titleAr: "التعليم القرآني",
     description:
-      "Design and the technical work that carries it to approval: architectural, structural, mechanical and electrical design, technical-office output, building permits and site supervision — issued through registered engineering offices.",
+      "The work the association was founded on: circles for memorising the Qur'an, and the teaching of recitation and tajweed that carries the memorisation properly.",
     items: [
       {
-        name: "Architectural & Interior Design",
-        detail: "Concept through to permit drawings, with interior design and space planning.",
+        name: "Memorisation Circles",
+        detail: "Regular circles for memorising the Qur'an, open to the local community.",
       },
       {
-        name: "Structural Design & Detailing",
-        detail: "Analysis, reinforcement detailing, shop drawings and BIM coordination.",
-      },
-      {
-        name: "Mechanical & Electrical Design",
-        detail: "Services design coordinated against the architectural and structural set.",
-      },
-      {
-        name: "Technical Office",
-        detail: "Quantity takeoffs, payment statements and tender documentation.",
-      },
-      {
-        name: "Permits & Approvals",
-        detail: "Building permits and licensing submissions, pursued to approval.",
-      },
-      {
-        name: "Engineering Reports",
-        detail: "Stamped engineering reports and 2D/3D output for client and authority review.",
+        name: "Recitation & Tajweed",
+        detail: "Teaching correct recitation alongside the memorisation rather than after it.",
       },
     ],
     opportunities: [
-      "The office's primary activity: every design, drawing set and report it issues falls under it.",
-      "Covers consultancy before, during and after execution rather than ending at the permit.",
+      "The association's founding activity, and the one its name is built around.",
+      "Runs continuously rather than in terms, so a family can begin when it is ready to.",
     ],
   },
   {
-    slug: "general-contracting",
+    slug: "social-care",
     entity: "eg",
-    title: "General Contracting",
-    titleAr: "المقاولات العامة",
+    title: "Social Care",
+    titleAr: "الرعاية الاجتماعية",
     description:
-      "Construction execution and resident site supervision — building what the consultancy side designs, or building to another designer's set, from breaking ground to handover.",
+      "Care for the people most exposed when a household is under strain: orphans and the families around them, and mothers and young children.",
     items: [
       {
-        name: "Construction Execution",
-        detail: "General contracting on residential, commercial and administrative buildings.",
+        name: "Orphan Sponsorship",
+        detail: "Sponsorship arranged so that it protects dignity rather than making help a favour.",
       },
       {
-        name: "Site Supervision",
-        detail: "Resident supervision, progress reporting and quality control on site.",
+        name: "Family Follow-up",
+        detail: "Staying with the family after the first arrangement, because the need rarely ends there.",
       },
       {
-        name: "Contractor Tendering",
-        detail: "Putting packages out to contractors and assessing the returns against the design.",
+        name: "The Nursery",
+        detail: "Early childcare for the children of the local community.",
       },
       {
-        name: "Handover Documentation",
-        detail: "As-built records and the handover file at completion.",
+        name: "Mother & Child Welfare",
+        detail: "A stated objective of the association, pursued alongside the nursery.",
       },
     ],
     opportunities: [
-      "Lets one office hold both the design and the build, so there is no handover between firms that have never shared a drawing set.",
-      "Supports work in Example Country and the office's stated activity in Region Two and Region Three.",
+      "Covers the association's objective of raising the standard of mother and child.",
+      "Pairs sponsorship with follow-up, so support is a relationship and not a transfer.",
+    ],
+  },
+  {
+    slug: "community-development",
+    entity: "eg",
+    title: "Community Development",
+    titleAr: "التنمية المجتمعية",
+    description:
+      "Work aimed at the community's own capacity: training and employment at the workshop, service projects including health awareness, and lending that lets a household start something of its own.",
+    items: [
+      {
+        name: "The Workshop",
+        detail: "Training and work, for women in particular, as the association's values name explicitly.",
+      },
+      {
+        name: "Service Projects",
+        detail: "Projects for the local community, decided by consultation with it.",
+      },
+      {
+        name: "Health Awareness",
+        detail: "Making families aware of the risks of disease — a stated objective of the association.",
+      },
+      {
+        name: "Lending",
+        detail: "Loans to households and small projects, so support outlasts the support itself.",
+      },
+    ],
+    opportunities: [
+      "Carries the association's value of active participation, women's participation especially, into practical work.",
+      "Lending aims at a household living from its own work rather than returning each year for aid.",
     ],
   },
 ];

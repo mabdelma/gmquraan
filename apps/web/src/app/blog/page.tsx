@@ -12,13 +12,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const T: Record<Locale, { h1: string; sub: string; empty: string }> = {
-  en: { h1: "Blog", sub: "Engineering articles and insights from Example Company.", empty: "No posts yet — check back soon." },
-  es: { h1: "Blog", sub: "Artículos y análisis de ingeniería de Example Company.", empty: "Aún no hay publicaciones — vuelve pronto." },
-  fr: { h1: "Blog", sub: "Articles et analyses d'ingénierie d'Example Company.", empty: "Pas encore d'articles — revenez bientôt." },
-  
-  pt: { h1: "Blog", sub: "Artigos e análises de engenharia da Example Company.", empty: "Ainda sem posts — volte em breve." },
-
-  ar: { h1: "المدوّنة", sub: "مقالات ورؤى هندسية من شركة مثال.", empty: "لا مقالات بعد — تحقّق قريبًا." }
+  en: { h1: "Articles", sub: "Articles and news from the association.", empty: "No posts yet — check back soon." },
+  es: { h1: "Artículos", sub: "Artículos y noticias de la asociación.", empty: "Aún no hay publicaciones — vuelve pronto." },
+  fr: { h1: "Articles", sub: "Articles et actualités de l'association.", empty: "Pas encore d'articles — revenez bientôt." },
+  pt: { h1: "Artigos", sub: "Artigos e notícias da associação.", empty: "Ainda sem posts — volte em breve." },
+  ar: { h1: "المقالات", sub: "مقالات وأخبار من الجمعية.", empty: "لا مقالات بعد — تحقّق قريبًا." }
 
   
 };

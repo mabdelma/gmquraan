@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ success: false, error: "invalid json" }, { status: 400 });
   }
-  const to = process.env.MONITOR_ALERT_TO || "info@example.com";
+  const to = process.env.MONITOR_ALERT_TO || "info@gmquran.com";
   const subject = (body.subject || "Unskinned system alert").slice(0, 180);
   const message = (body.message || "(no detail)").slice(0, 4000);
 

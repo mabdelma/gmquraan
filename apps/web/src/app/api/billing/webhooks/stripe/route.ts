@@ -12,7 +12,7 @@ const BILLING = process.env.BILLING_URL_INTERNAL || "http://localhost:8083";
  * through byte-for-byte — never parse/re-serialize it, or signature checks fail.
  *
  * Configure in Stripe → Developers → Webhooks:
- *   URL:    https://example.com/api/billing/webhooks/stripe
+ *   URL:    https://gmquran.com/api/billing/webhooks/stripe
  *   Events: checkout.session.completed, invoice.payment_succeeded,
  *           invoice.payment_failed, customer.subscription.updated,
  *           customer.subscription.deleted
