@@ -55,8 +55,6 @@ const body = Cairo({
   display: "swap"
 });
 
-const THEME_INIT = "(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();";
-
 // The central console is its own shell — hide the public marketing top bar + footer.
 const APP_PREFIXES = ["/central"];
 
@@ -75,21 +73,18 @@ export const metadata: Metadata = {
   applicationName: COMPANY.name,
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: COMPANY.shortName },
   icons: {
+    // Light-only site: one favicon set, no prefers-color-scheme variants.
     icon: [
-      { url: "/favicon-light-32.png?v=5", media: "(prefers-color-scheme: light)", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-dark-32.png?v=5", media: "(prefers-color-scheme: dark)", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-light-192.png?v=5", media: "(prefers-color-scheme: light)", sizes: "192x192", type: "image/png" },
-      { url: "/favicon-dark-192.png?v=5", media: "(prefers-color-scheme: dark)", sizes: "192x192", type: "image/png" }
+      { url: "/favicon-light-32.png?v=5", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-light-192.png?v=5", sizes: "192x192", type: "image/png" }
     ],
     apple: [{ url: "/apple-touch-icon.png?v=5", sizes: "180x180" }]
   }
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#071f1e" }
-  ],
+  // Light-only: the browser UI colour matches the page background in every context.
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover"
@@ -107,8 +102,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${display.variable} ${body.variable}`}
     >
       <body className="app-minh flex flex-col">
-        {/* eslint-disable-next-line react/no-danger */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <GlobalBackground />
         {/* eslint-disable-next-line react/no-danger */}
         <script

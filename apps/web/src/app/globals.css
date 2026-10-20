@@ -60,53 +60,10 @@
   --grad-text-to: #175f5e;
 }
 
-/* Explicit dark choice (toggle) */
-:root[data-theme="dark"] {
-  --bg: #071f1e;
-  --panel: #0c3433;
-  --surface: #144544;
-  --ink: #f8f7f3;
-  --muted: #9fb8b5;
-  /* On the dark ground the bright wreath teal carries: 5.03:1 on --panel. */
-  --accent: #4dacac;
-  --accent2: #d7b75a;
-  --silver: #a9b4b3;
-  --hairline: rgba(77, 172, 172, 0.3);
-  --overlay: rgba(255, 255, 255, 0.06);
-  /* Mint reads strongest on the dark panel at 9.27:1. */
-  --accent-text: #b9decf;
-  --on-accent: #0c3433;
-  --on-danger: #071f1e;
-  --grad-from: #4dacac;
-  --grad-to: #175f5e;
-  --grad-text-from: #b9decf;
-  --grad-text-to: #4dacac;
-  color-scheme: dark;
-}
-
-/* Follow the OS setting when the visitor hasn't explicitly chosen light */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #071f1e;
-    --panel: #0c3433;
-    --surface: #144544;
-    --ink: #f8f7f3;
-    --muted: #9fb8b5;
-    --accent: #4dacac;
-    --accent2: #d7b75a;
-    --silver: #a9b4b3;
-    --hairline: rgba(77, 172, 172, 0.3);
-    --overlay: rgba(255, 255, 255, 0.06);
-    --accent-text: #b9decf;
-    --on-accent: #0c3433;
-    --on-danger: #071f1e;
-    --grad-from: #4dacac;
-    --grad-to: #175f5e;
-    --grad-text-from: #b9decf;
-    --grad-text-to: #4dacac;
-    color-scheme: dark;
-  }
-}
+/* The site is light-only: there is no dark theme and no toggle. The `:root`
+   palette above is the whole palette, `color-scheme: light` pins the form
+   controls and scrollbars to light, and nothing reads prefers-color-scheme, so
+   a visitor on a dark OS still gets the light site. */
 
 html {
   scroll-behavior: smooth;
@@ -349,30 +306,12 @@ h3,
   padding-top: env(safe-area-inset-top);
 }
 
-/* ---- Theme-aware brand mark (blue on light, white on dark) ----
-   Same switching logic as the theme tokens above: light by default, dark via
-   the manual toggle, or via the OS setting when no explicit choice was made. */
+/* ---- Brand mark ----
+   The site is light-only, so only the light emblem is ever shown. The dark
+   variant is no longer rendered (see BrandLogo.tsx); this rule remains so the
+   mark sits inline. */
 .brand-logo-light {
   display: inline-block;
-}
-.brand-logo-dark {
-  display: none;
-}
-
-:root[data-theme="dark"] .brand-logo-light {
-  display: none;
-}
-:root[data-theme="dark"] .brand-logo-dark {
-  display: inline-block;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .brand-logo-light {
-    display: none;
-  }
-  :root:not([data-theme="light"]) .brand-logo-dark {
-    display: inline-block;
-  }
 }
 
 /* ── Touch devices ───────────────────────────────────────────────────────────
