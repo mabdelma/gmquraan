@@ -1,0 +1,78 @@
+# blog.gmtmall.com — the Qur'an association site.
+#
+# A deliberately minimal instance of this codebase: the Next.js web app and its
+# own Postgres, and nothing else. The association site is a content site, so the
+# AI advisor, the workforce portal and the six Fastify microservices that the
+# full platform ships are not run here. Every public page renders without them.
+#
+#   cd /var/www/gmquran
+#   docker compose -f infra/compose/docker-compose.blog.yml --env-file .env -p blog up -d --build
+#
+# Everything is prefixed `blog-` and shares nothing with the other stacks on the
+# box — its own Postgres, its own volumes, its own internal network. `blog-web`
+# also joins the shared external `edge` network so the central Caddy can
+# reverse_proxy to it by name (blog-web:3000). No host ports are published.
+#
+# AUTH_SECRET, POSTGRES_PASSWORD and APP_URL are declared with `:?`, so compose
+# refuses to start rather than bring the stack up on the wrong domain or a blank
+# secret. Copy .env.blog.example → .env and fill them in.
+
+name: blog
+
+services:
+  blog-postgres:
+    image: postgres:16-alpine
+    container_name: blog-postgres
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_DB: blog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - blog_pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog -d blog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  blog-web:
+    container_name: blog-web
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NODE_ENV: production
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      # The site data, and the control plane the /central console expects. Both
+      # live in this stack's own Postgres; the control DB is created by hand
+      # (Postgres only auto-creates POSTGRES_DB) — see docs/BLOG-DEPLOY.md.
+      DATABASE_URL: postgresql://blog:${POSTGRES_PASSWORD}@blog-postgres:5432/blog
+      CONTROL_DATABASE_URL: postgresql://blog:${POSTGRES_PASSWORD}@blog-postgres:5432/blog_control
+      # Absolute links (emails, invites, canonical URLs) are built from this,
+      # not from the Host header, so it must match the real origin exactly.
+      APP_URL: ${APP_URL:?set APP_URL in .env, e.g. https://blog.gmtmall.com}
+      # The workforce portal is not deployed here; point the handoff at the site
+      # itself rather than leaving the :? guard in the app unsatisfied.
+      PORTAL_URL: ${APP_URL}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - blog_uploads:/data/uploads
+    networks: [edge, internal]
+    depends_on:
+      blog-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  # The shared edge network the central Caddy lives on. Created already by the
+  # other stacks on this box; external so this compose joins rather than owns it.
+  edge:
+    external: true
+  internal:
+    driver: bridge
+
+volumes:
+  blog_pgdata:
+  blog_uploads:

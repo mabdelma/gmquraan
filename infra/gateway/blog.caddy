@@ -1,0 +1,15 @@
+# blog.gmtmall.com — append to the central Caddyfile on the VPS
+# (/var/www/qarrito/infrastructure/caddy/Caddyfile) and reload Caddy.
+#
+# blog-web is reachable by name on the shared `edge` network. The same host
+# must be set as APP_URL in /var/www/gmquran/.env — the app builds absolute
+# links from that, not from the Host header.
+#
+# DNS must already resolve blog.gmtmall.com to the VPS before reloading: Caddy
+# issues the certificate on first request via an HTTP-01 challenge, which fails
+# against a host that does not resolve here.
+
+blog.gmtmall.com {
+	encode zstd gzip
+	reverse_proxy blog-web:3000
+}

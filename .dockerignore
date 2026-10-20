@@ -7,3 +7,6 @@
 .env
 .env.*
 !.env.example
+# Scrape reference data and its mirrors — never part of a build.
+scrape_out
+scrape_gmquran.py
