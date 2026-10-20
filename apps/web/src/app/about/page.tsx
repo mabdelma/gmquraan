@@ -121,7 +121,7 @@ export default async function AboutPage() {
       </Section>
 
       <Section eyebrow={pick(SECTIONS.practiceEyebrow, locale)} title={pick(UI.valuesTitle, locale)} subtitle={pick(UI.valuesSubtitle, locale)}>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-2 lg:grid-cols-3">
           {VALUES.map((v) => {
             const Icon = VALUE_ICON[v.key];
             return (
@@ -136,7 +136,7 @@ export default async function AboutPage() {
       </Section>
 
       <Section eyebrow={pick(SECTIONS.reachTitle, locale)} title={pick(UI.reachTitle, locale)} subtitle={pick(UI.reachSubtitle, locale)}>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-3">
           {REGIONS.map((r) => (
             <div key={r.name} className="panel rounded-2xl p-6">
               <span className="text-3xl" aria-hidden="true">{r.flag}</span>
@@ -148,7 +148,7 @@ export default async function AboutPage() {
       </Section>
 
       <Section eyebrow={pick(SECTIONS.leadership, locale)} title={pick(UI.leadershipTitle, locale)} subtitle={pick(UI.leadershipSubtitle, locale)}>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-2">
           {LEADERSHIP.map((p) => (
             <div key={p.name} className="panel rounded-2xl p-7">
               {/* Initials, not a portrait: no photograph has been supplied and

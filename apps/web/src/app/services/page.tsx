@@ -53,7 +53,7 @@ export default async function ServicesPage() {
   return (
     <>
       <Section eyebrow={pick(UI.eyebrow, locale)} title={pick(UI.title, locale)} subtitle={pick(UI.subtitle, locale)}>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-2 lg:grid-cols-3">
           {PRACTICE_AREAS.map((a, i) => {
             const Icon = PRACTICE_ICON[a.slug];
             return (
@@ -85,7 +85,7 @@ export default async function ServicesPage() {
       </Section>
 
       <Section eyebrow={pick(UI.approachEyebrow, locale)} title={pick(UI.approachTitle, locale)}>
-        <ol className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <ol className="grid auto-rows-fr gap-4 md:grid-cols-3 lg:grid-cols-5">
           {OPERATING_MODEL.map((o, i) => (
             <li key={o.title} className="panel rounded-2xl p-5">
               <div className="app-gradient-text text-2xl font-extrabold">{String(i + 1).padStart(2, "0")}</div>
@@ -110,7 +110,7 @@ export default async function ServicesPage() {
           {pick(UI.activitiesLink, locale)} →
         </Link>
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
           {activityText.map((text, i) => (
             <div key={ACTIVITIES[i].en} className="panel rounded-xl p-4 flex items-start gap-3">
               <span className="text-sm text-[color:var(--ink)]/80 flex-1">{text}</span>

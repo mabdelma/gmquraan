@@ -98,21 +98,28 @@ export default async function MediaPage() {
             {/* Masonry via CSS columns: these frames are a mix of landscape,
                 portrait and one long strip, and a fixed-ratio grid would crop
                 drawings that the crop is the content of. */}
-            <div className="mt-6 columns-1 gap-4 sm:columns-2 lg:columns-3 [&>figure]:mb-4">
+            {/* A uniform grid, not masonry: every tile is the same size. The
+                images are a mix of square cards, one portrait and one landscape,
+                so each is fixed to a 4:3 frame and object-cover crops to it —
+                the subjects are centred, so the crop is safe. auto-rows-fr plus
+                a flex card keeps the caption area equal across tiles too. */}
+            <div className="mt-6 grid auto-rows-fr grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {c.items.map((m) => (
                 <figure
                   key={m.id}
                   id={m.id}
-                  className="app-reveal break-inside-avoid overflow-hidden rounded-xl border border-[color:var(--hairline)] bg-[color:var(--panel)] scroll-mt-24"
+                  className="app-reveal flex flex-col overflow-hidden rounded-xl border border-[color:var(--hairline)] bg-[color:var(--panel)] scroll-mt-24"
                 >
-                  <img
-                    src={m.src}
-                    alt={t(m.alt, locale)}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full"
-                  />
-                  <figcaption className="px-4 py-3 text-xs leading-relaxed text-[color:var(--ink)]/60">
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={m.src}
+                      alt={t(m.alt, locale)}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover"
+                    />
+                  </div>
+                  <figcaption className="flex-1 px-4 py-3 text-xs leading-relaxed text-[color:var(--ink)]/60">
                     {t(m.alt, locale)}
                   </figcaption>
                 </figure>
@@ -162,7 +169,7 @@ export default async function MediaPage() {
               <p className="mt-2 text-sm text-[color:var(--ink)]/60">{t(UI.emptyBody, locale)}</p>
             </div>
           ) : (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {posts.map((p) => (
                 <article
                   key={p.id}

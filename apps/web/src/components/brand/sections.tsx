@@ -104,7 +104,7 @@ export function ValuesStrip({ locale }: { locale: Locale }) {
        buttons, at any width. */
     <section className="relative z-10 -mt-20 md:-mt-24">
       <div className="mx-auto max-w-6xl px-5">
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-7 rounded-2xl border border-[color:var(--accent)]/25 bg-[#0c3433]/95 p-6 shadow-2xl backdrop-blur sm:grid-cols-3 md:p-8 lg:grid-cols-5">
+        <ul className="grid auto-rows-fr grid-cols-2 gap-x-4 gap-y-7 rounded-2xl border border-[color:var(--accent)]/25 bg-[#0c3433]/95 p-6 shadow-2xl backdrop-blur sm:grid-cols-3 md:p-8 lg:grid-cols-5">
           {VALUES.map((v, i) => {
             const Icon = VALUE_ICON[v.key];
             return (
@@ -248,7 +248,7 @@ export function FounderNote({ locale }: { locale: Locale }) {
 
         <p className="mt-7 text-base leading-loose text-white/80">{t(STEWARDSHIP.note, locale)}</p>
 
-        <ul className="mt-9 grid gap-3 sm:grid-cols-3">
+        <ul className="mt-9 grid auto-rows-fr gap-3 sm:grid-cols-3">
           {STEWARDSHIP.commitments.map((c) => (
             <li key={c.key} className="rounded-lg border border-white/10 px-4 py-3 text-start">
               <span className="block size-1.5 rotate-45 bg-[color:var(--accent)]" aria-hidden="true" />

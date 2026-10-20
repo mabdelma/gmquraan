@@ -34,7 +34,7 @@ export default async function BlogPage() {
       {posts.length === 0 ? (
         <p className="text-[color:var(--ink)]/50 mt-10 panel rounded-2xl p-10 text-center">{t.empty}</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
+        <div className="grid auto-rows-fr gap-6 md:grid-cols-2 lg:grid-cols-3 mt-10">
           {posts.map((p) => (
             <Link key={p.slug} href={`/blog/${p.slug}`} className="panel rounded-2xl overflow-hidden hover:border-[color:var(--accent-text)]/40 transition flex flex-col">
               {p.coverImage && (
