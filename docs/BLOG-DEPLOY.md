@@ -51,8 +51,20 @@ Check disk first — this box runs close to full. Reclaim build cache if needed:
 df -h /
 docker builder prune -f          # build cache is safe to drop
 cd /var/www/gmquran
-docker compose -f infra/compose/docker-compose.blog.yml --env-file .env -p blog up -d --build
+BUILDX_NO_DEFAULT_ATTESTATIONS=1 \
+  docker compose -f infra/compose/docker-compose.blog.yml --env-file .env -p blog \
+  up -d --build --force-recreate blog-web
 ```
+
+> `BUILDX_NO_DEFAULT_ATTESTATIONS=1` matters. Without it buildx tags
+> `blog-blog-web:latest` as a multi-platform **manifest list**, and `compose up`
+> then recreates the container from the *previous* image instead of the one it
+> just built — the deploy appears to succeed while serving stale code. The flag
+> produces a plain image so the recreate uses it. `--force-recreate` guarantees
+> the container is replaced even when compose thinks nothing changed. Run this in
+> the **foreground**: backgrounding it (`&`, `nohup`, `setsid`) has repeatedly
+> been killed after the build but before the recreate, leaving the old container
+> up. Let it finish — the build is a couple of minutes.
 
 ## 4. Create the schema
 
@@ -97,8 +109,14 @@ curl -I https://blog.gmtmall.com          # 200, after the cert issues
 ## Updating later
 
 ```sh
+# rsync deletes removed files; a tar-pipe (if rsync is unavailable locally) only
+# adds/overwrites, so clear the deleted ones by hand when using tar.
 rsync -az --delete --exclude node_modules --exclude .next --exclude .git \
   --exclude scrape_out ./ qarrito:/var/www/gmquran/
-ssh qarrito 'cd /var/www/gmquran && docker compose -f infra/compose/docker-compose.blog.yml --env-file .env -p blog up -d --build'
+ssh qarrito 'cd /var/www/gmquran && BUILDX_NO_DEFAULT_ATTESTATIONS=1 \
+  docker compose -f infra/compose/docker-compose.blog.yml --env-file .env -p blog \
+  up -d --build --force-recreate blog-web'
+# verify the swap actually happened — the image id must change:
+ssh qarrito 'docker inspect blog-web --format "{{.Image}} {{.State.StartedAt}}"'
 # if the Prisma schema changed, re-run the db push from step 4 (back up first).
 ```
